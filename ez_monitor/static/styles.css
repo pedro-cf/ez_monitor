@@ -17,7 +17,7 @@ body {
 .metric-container {
     width: calc(33.33% - 14px); /* Adjusted for 3 columns */
     min-width: 300px; /* Adjusted minimum width */
-    height: 460px; /* Increased from 440px to accommodate more content */
+    height: 500px; /* Increased from 460px to accommodate larger info box */
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
@@ -68,12 +68,11 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
     padding: 8px;
     border-radius: 5px;
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* Changed from space-between */
-    height: auto; /* Changed from fixed height */
-    overflow-y: visible; /* Changed from auto */
+    height: 90px; /* Increased height to accommodate 5 rows of text */
+    overflow-y: auto; /* Added scrollbar if content exceeds height */
 }
 .value-box {
     display: inline-block;
@@ -147,7 +146,7 @@ body {
     flex-grow: 1;
     position: relative;
     margin-top: 10px;
-    min-height: 195px; /* Increased from 150px (150 * 1.3 = 195) */
+    min-height: 180px; /* Slightly reduced to make room for larger info box */
 }
 
 canvas {
@@ -181,4 +180,13 @@ canvas {
     .metric-container {
         width: 100%; /* 1 column on very small screens */
     }
+}
+
+/* Specific adjustments for the network container */
+.metric-container:last-child .progress-bar {
+    margin-bottom: 5px; /* Reduced margin to bring gauge closer to label */
+}
+
+.metric-container:last-child .disk-info-row {
+    margin-top: 5px; /* Added margin to separate dynamic info from progress bar */
 }
