@@ -84,6 +84,16 @@
             font-size: 10px;
             color: rgba(255, 255, 255, 0.5);
         }
+        .disk-selector {
+            margin-bottom: 10px;
+        }
+        select {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 5px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -115,7 +125,14 @@
             <div id="memoryInfo" class="info"></div>
         </div>
         <div class="metric-container">
-            <div class="label">Disk</div>
+            <div class="label">
+                Disk
+                <select id="diskSelector" class="disk-selector">
+                    {% for disk in disks %}
+                    <option value="{{ disk }}">{{ disk }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="progress-bar">
                 <div id="diskProgress" class="progress"></div>
                 <div id="diskMaxLine" class="max-line"></div>
@@ -133,6 +150,7 @@
         let cpuMax = 0;
         let memoryMax = 0;
         let diskMax = 0;
+        const diskSelector = document.getElementById('diskSelector');
 
         function updateCPUMetric(cpu) {
             const progress = document.getElementById('cpuProgress');
@@ -214,7 +232,8 @@
         }
 
         function updateMetrics() {
-            fetch('/metrics')
+            const selectedDisk = diskSelector.value;
+            fetch(`/metrics?disk=${encodeURIComponent(selectedDisk)}`)
                 .then(response => response.json())
                 .then(data => {
                     updateCPUMetric(data.cpu);
@@ -228,6 +247,9 @@
             const hue = (1 - value / 100) * 120;
             progressElement.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
         }
+
+        // Update metrics when disk selection changes
+        diskSelector.addEventListener('change', updateMetrics);
 
         // Update metrics every second
         setInterval(updateMetrics, 1000);

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import psutil
 import time
 import os
@@ -39,28 +39,37 @@ def get_memory_info():
         'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
     }
 
-def get_disk_info():
-    disk = psutil.disk_usage('/')
-    read_bytes, write_bytes = psutil.disk_io_counters().read_bytes, psutil.disk_io_counters().write_bytes
+def get_disk_info(path='/'):
+    disk = psutil.disk_usage(path)
+    io_counters = psutil.disk_io_counters(perdisk=True)
+    disk_name = os.path.basename(path)
+    io_counter = io_counters.get(disk_name, psutil.disk_io_counters())
+    
     return {
         'total': f"{disk.total / (1024 ** 3):.2f} GB",
         'used': f"{disk.used / (1024 ** 3):.2f} GB",
         'free': f"{disk.free / (1024 ** 3):.2f} GB",
         'percent': disk.percent,
-        'read': f"{read_bytes / (1024 ** 3):.2f} GB",
-        'write': f"{write_bytes / (1024 ** 3):.2f} GB"
+        'read': f"{io_counter.read_bytes / (1024 ** 3):.2f} GB",
+        'write': f"{io_counter.write_bytes / (1024 ** 3):.2f} GB"
     }
+
+def get_available_disks():
+    partitions = psutil.disk_partitions(all=False)
+    return [p.mountpoint for p in partitions]
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    disks = get_available_disks()
+    return render_template('index.html', disks=disks)
 
 @app.route('/metrics')
 def metrics():
+    selected_disk = request.args.get('disk', '/')
     return jsonify({
         'cpu': get_cpu_info(),
         'memory': get_memory_info(),
-        'disk': get_disk_info(),
+        'disk': get_disk_info(selected_disk),
         'timestamp': int(time.time() * 1000)
     })
 
