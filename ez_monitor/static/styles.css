@@ -11,8 +11,8 @@ body {
     gap: 20px;
 }
 .metric-container {
-    width: calc(50% - 10px); /* Change to 2 columns */
-    height: 400px; /* Increase height */
+    width: calc(25% - 15px); /* Change to 4 columns */
+    height: 400px; /* Keep the increased height */
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
