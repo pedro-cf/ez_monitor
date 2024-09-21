@@ -195,14 +195,14 @@ canvas {
 
 .dashboard-header {
     text-align: center;
-    margin-bottom: 20px;
-    padding: 20px;
+    margin-bottom: 10px; /* Changed from 20px to 10px */
+    padding: 10px; /* Changed from 20px to 10px */
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
 }
 
-.dashboard-header h1 {
-    font-size: 36px;
+.dashboard-header h2 { /* Changed from h1 to h2 */
+    font-size: 32px; /* Slightly reduced font size to match h2 */
     margin: 0;
     color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
