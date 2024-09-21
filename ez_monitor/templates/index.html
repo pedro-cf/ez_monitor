@@ -67,6 +67,30 @@
                 <canvas id="diskChart"></canvas>
             </div>
         </div>
+        <div class="metric-container">
+            <div class="label">Disk I/O <span id="diskIOPercent" class="percentage"></span></div>
+            <div class="progress-bar">
+                <div id="diskIOProgress" class="progress"></div>
+                <div id="diskIOMaxLine" class="max-line"></div>
+            </div>
+            <div id="diskIODynamicInfo" class="dynamic-info"></div>
+            <div id="diskIOInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="diskIOChart"></canvas>
+            </div>
+        </div>
+        <div class="metric-container">
+            <div class="label">Network <span id="networkPercent" class="percentage"></span></div>
+            <div class="progress-bar">
+                <div id="networkProgress" class="progress"></div>
+                <div id="networkMaxLine" class="max-line"></div>
+            </div>
+            <div id="networkDynamicInfo" class="dynamic-info"></div>
+            <div id="networkInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="networkChart"></canvas>
+            </div>
+        </div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

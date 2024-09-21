@@ -6,17 +6,17 @@ body {
     padding: 20px;
     font-size: 14px;
     line-height: 1.5;
-    min-width: 1200px; /* Minimum width to maintain 4 columns */
+    min-width: 1000px; /* Adjusted for 3 columns */
 }
 .dashboard {
     display: flex;
-    flex-wrap: nowrap; /* Prevent wrapping by default */
+    flex-wrap: wrap; /* Allow wrapping */
     gap: 20px;
-    min-width: 1160px; /* Minimum width for the dashboard */
+    min-width: 960px; /* Adjusted for 3 columns */
 }
 .metric-container {
-    width: calc(25% - 15px); /* Always 25% width for 4 columns */
-    min-width: 275px; /* Minimum width for each container */
+    width: calc(33.33% - 14px); /* Adjusted for 3 columns */
+    min-width: 300px; /* Adjusted minimum width */
     height: 400px;
     display: flex;
     flex-direction: column;
@@ -155,7 +155,7 @@ canvas {
     margin-top: 10px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     body {
         padding: 10px;
         min-width: auto; /* Allow body to shrink on very small screens */

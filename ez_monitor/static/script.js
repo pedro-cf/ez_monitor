@@ -2,13 +2,15 @@ let cpuMax = 0;
 let memoryMax = 0;
 let diskMax = 0;
 let gpuMax = 0;
+let diskIOMax = 0;
+let networkMax = 0;
 const diskSelector = document.getElementById('diskSelector');
 
-let cpuChart, memoryChart, diskChart, gpuChart;
+let cpuChart, memoryChart, diskChart, gpuChart, diskIOChart, networkChart;
 const maxDataPoints = 1800; // Show last 60 minutes of data (60 * 60 / 2 = 1800)
 const updateInterval = 2000; // Update every 2000 milliseconds (2 seconds)
 
-function createChart(ctx, label) {
+function createChart(ctx, label, isPercentage = true, fixedMax = null) {
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -44,7 +46,7 @@ function createChart(ctx, label) {
                     },
                     ticks: {
                         color: 'rgba(255, 255, 255, 0.7)',
-                        maxTicksLimit: 12, // Show 12 ticks on x-axis
+                        maxTicksLimit: 12,
                         maxRotation: 0,
                         font: {
                             size: 10
@@ -59,14 +61,18 @@ function createChart(ctx, label) {
                 },
                 y: {
                     beginAtZero: true,
-                    max: 100,
                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
                     ticks: { 
                         color: 'rgba(255, 255, 255, 0.7)',
                         callback: function(value) {
-                            return value + '%';
+                            if (isPercentage) {
+                                return value + '%';
+                            } else {
+                                return value.toFixed(2);
+                            }
                         }
-                    }
+                    },
+                    max: fixedMax // Set a fixed maximum if provided
                 }
             },
             plugins: {
@@ -77,7 +83,21 @@ function createChart(ctx, label) {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
                     titleColor: 'rgba(255, 255, 255, 1)',
                     bodyColor: 'rgba(255, 255, 255, 1)',
-                    displayColors: false
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (isPercentage) {
+                                label += context.parsed.y.toFixed(1) + '%';
+                            } else {
+                                label += context.parsed.y.toFixed(2);
+                            }
+                            return label;
+                        }
+                    }
                 }
             },
             animation: { duration: 0 }
@@ -99,10 +119,12 @@ function updateChart(chart, value) {
 }
 
 function initCharts() {
-    cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage');
-    memoryChart = createChart(document.getElementById('memoryChart').getContext('2d'), 'Memory Usage');
-    diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage');
-    gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU Usage');
+    cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage', true, 100);
+    memoryChart = createChart(document.getElementById('memoryChart').getContext('2d'), 'Memory Usage (GB)', false);
+    diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage (GB)', false);
+    gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU Usage', true, 100);
+    diskIOChart = createChart(document.getElementById('diskIOChart').getContext('2d'), 'Disk I/O (MB/s)', false);
+    networkChart = createChart(document.getElementById('networkChart').getContext('2d'), 'Network Usage (MB/s)', false);
 }
 
 function updateCPUMetric(cpu) {
@@ -164,7 +186,14 @@ function updateMemoryMetric(memory) {
         maxLine.style.display = 'block';
     }
     
-    updateChart(memoryChart, memory.percent);
+    const usedGB = parseFloat(memory.used);
+    const totalGB = parseFloat(memory.total);
+    
+    if (memoryChart.options.scales.y.max === null) {
+        memoryChart.options.scales.y.max = totalGB;
+    }
+    
+    updateChart(memoryChart, usedGB);
 }
 
 function updateDiskMetric(disk) {
@@ -193,7 +222,14 @@ function updateDiskMetric(disk) {
         maxLine.style.display = 'block';
     }
     
-    updateChart(diskChart, disk.percent);
+    const usedGB = parseFloat(disk.used);
+    const totalGB = parseFloat(disk.total);
+    
+    if (diskChart.options.scales.y.max === null) {
+        diskChart.options.scales.y.max = totalGB;
+    }
+    
+    updateChart(diskChart, usedGB);
 }
 
 function updateGPUMetric(gpu) {
@@ -231,6 +267,64 @@ function updateGPUMetric(gpu) {
     }
 }
 
+function updateDiskIOMetric(diskIO) {
+    const progress = document.getElementById('diskIOProgress');
+    const percentElement = document.getElementById('diskIOPercent');
+    const dynamicInfoElement = document.getElementById('diskIODynamicInfo');
+    const infoElement = document.getElementById('diskIOInfo');
+    const maxLine = document.getElementById('diskIOMaxLine');
+    
+    const totalSpeed = diskIO.read_speed + diskIO.write_speed;
+    const percent = Math.min(totalSpeed / diskIOMax * 100, 100);
+    
+    progress.style.width = `${percent}%`;
+    percentElement.textContent = `${percent.toFixed(1)}%`;
+    dynamicInfoElement.innerHTML = `
+        <div class="value-box">Read: ${diskIO.read_speed.toFixed(2)} MB/s</div>
+        <div class="value-box">Write: ${diskIO.write_speed.toFixed(2)} MB/s</div>
+    `;
+    infoElement.innerHTML = `Total I/O: ${totalSpeed.toFixed(2)} MB/s`;
+    
+    updateProgressColor(progress, percent);
+
+    if (totalSpeed > diskIOMax) {
+        diskIOMax = totalSpeed;
+        maxLine.style.left = '100%';
+        maxLine.style.display = 'block';
+    }
+    
+    updateChart(diskIOChart, totalSpeed);
+}
+
+function updateNetworkMetric(network) {
+    const progress = document.getElementById('networkProgress');
+    const percentElement = document.getElementById('networkPercent');
+    const dynamicInfoElement = document.getElementById('networkDynamicInfo');
+    const infoElement = document.getElementById('networkInfo');
+    const maxLine = document.getElementById('networkMaxLine');
+    
+    const totalSpeed = network.upload_speed + network.download_speed;
+    const percent = Math.min(totalSpeed / networkMax * 100, 100);
+    
+    progress.style.width = `${percent}%`;
+    percentElement.textContent = `${percent.toFixed(1)}%`;
+    dynamicInfoElement.innerHTML = `
+        <div class="value-box">Upload: ${network.upload_speed.toFixed(2)} MB/s</div>
+        <div class="value-box">Download: ${network.download_speed.toFixed(2)} MB/s</div>
+    `;
+    infoElement.innerHTML = `Total Network: ${totalSpeed.toFixed(2)} MB/s`;
+    
+    updateProgressColor(progress, percent);
+
+    if (totalSpeed > networkMax) {
+        networkMax = totalSpeed;
+        maxLine.style.left = '100%';
+        maxLine.style.display = 'block';
+    }
+    
+    updateChart(networkChart, totalSpeed);
+}
+
 function updateMetrics() {
     const selectedDisk = diskSelector.value;
     fetch(`/metrics?disk=${encodeURIComponent(selectedDisk)}`)
@@ -241,6 +335,8 @@ function updateMetrics() {
             updateMemoryMetric(data.memory);
             updateDiskMetric(data.disk);
             updateGPUMetric(data.gpu);
+            updateDiskIOMetric(data.disk_io);
+            updateNetworkMetric(data.network);
         })
         .catch(error => {
             console.error('Error fetching metrics:', error);

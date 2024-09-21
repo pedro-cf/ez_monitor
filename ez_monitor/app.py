@@ -13,7 +13,14 @@ from threading import Thread, Lock
 app = Flask(__name__)
 
 # Global variables to store metrics
-metrics = {}
+metrics = {
+    'cpu': {},
+    'memory': {},
+    'disk': {},
+    'gpu': {},
+    'disk_io': {},
+    'network': {}
+}
 metrics_lock = Lock()
 
 # Cache CPU info that doesn't change
@@ -114,17 +121,67 @@ def update_gpu_info():
         print(f"Error getting GPU info: {e}")
         return {'error': str(e)}
 
+def update_disk_io():
+    io_counters = psutil.disk_io_counters()
+    return {
+        'read_bytes': io_counters.read_bytes,
+        'write_bytes': io_counters.write_bytes,
+        'read_count': io_counters.read_count,
+        'write_count': io_counters.write_count,
+    }
+
+def update_network_usage():
+    net_counters = psutil.net_io_counters()
+    return {
+        'bytes_sent': net_counters.bytes_sent,
+        'bytes_recv': net_counters.bytes_recv,
+        'packets_sent': net_counters.packets_sent,
+        'packets_recv': net_counters.packets_recv,
+    }
+
 def update_metrics():
     global metrics
+    last_disk_io = update_disk_io()
+    last_net_usage = update_network_usage()
+    last_time = time.time()
+
     while True:
+        current_time = time.time()
+        elapsed = current_time - last_time
+
+        current_disk_io = update_disk_io()
+        current_net_usage = update_network_usage()
+
+        # Avoid division by zero
+        if elapsed > 0:
+            disk_io_speed = {
+                'read_speed': (current_disk_io['read_bytes'] - last_disk_io['read_bytes']) / elapsed / 1024 / 1024,
+                'write_speed': (current_disk_io['write_bytes'] - last_disk_io['write_bytes']) / elapsed / 1024 / 1024,
+            }
+
+            net_speed = {
+                'upload_speed': (current_net_usage['bytes_sent'] - last_net_usage['bytes_sent']) / elapsed / 1024 / 1024,
+                'download_speed': (current_net_usage['bytes_recv'] - last_net_usage['bytes_recv']) / elapsed / 1024 / 1024,
+            }
+        else:
+            disk_io_speed = {'read_speed': 0, 'write_speed': 0}
+            net_speed = {'upload_speed': 0, 'download_speed': 0}
+
         new_metrics = {
             'cpu': update_cpu_info(),
             'memory': update_memory_info(),
             'disk': {p.mountpoint: update_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
-            'gpu': update_gpu_info()
+            'gpu': update_gpu_info(),
+            'disk_io': disk_io_speed,
+            'network': net_speed,
         }
         with metrics_lock:
-            metrics = new_metrics
+            metrics.update(new_metrics)
+
+        last_disk_io = current_disk_io
+        last_net_usage = current_net_usage
+        last_time = current_time
+
         time.sleep(2)  # Update every 2 seconds
 
 @app.route('/')
@@ -137,10 +194,12 @@ def get_metrics():
     selected_disk = request.args.get('disk', '/')
     with metrics_lock:
         response = {
-            'cpu': metrics['cpu'],
-            'memory': metrics['memory'],
-            'disk': metrics['disk'].get(selected_disk, update_disk_info(selected_disk)),
-            'gpu': metrics['gpu']
+            'cpu': metrics.get('cpu', {}),
+            'memory': metrics.get('memory', {}),
+            'disk': metrics.get('disk', {}).get(selected_disk, update_disk_info(selected_disk)),
+            'gpu': metrics.get('gpu', {}),
+            'disk_io': metrics.get('disk_io', {}),
+            'network': metrics.get('network', {})
         }
     return jsonify(response)
 
