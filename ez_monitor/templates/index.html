@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .dashboard {
+            display: flex;
+            gap: 20px;
+        }
+        .metric-container {
+            width: calc(50% - 10px);
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background-color: #333;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+        .label {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .core-count {
+            font-size: 14px;
+            font-style: italic;
+            margin-left: 10px;
+        }
+        .value {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="metric-container">
+            <div class="label">CPU Usage <span id="cpuCores" class="core-count"></span></div>
+            <div class="progress-bar">
+                <div id="cpuProgress" class="progress"></div>
+            </div>
+            <div id="cpuValue" class="value"></div>
+        </div>
+        <div class="metric-container">
+            <div class="label">Memory Usage</div>
+            <div class="progress-bar">
+                <div id="memoryProgress" class="progress"></div>
+            </div>
+            <div id="memoryValue" class="value"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateMetrics() {
+            fetch('/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    updateMetric('cpu', data.cpu, data.cpu_count);
+                    updateMetric('memory', data.memory);
+                })
+                .catch(error => console.error('Error fetching metrics:', error));
+        }
+
+        function updateMetric(metric, value, coreCount = null) {
+            const progress = document.getElementById(`${metric}Progress`);
+            const valueElement = document.getElementById(`${metric}Value`);
+            
+            progress.style.width = `${value}%`;
+            valueElement.textContent = `${value.toFixed(1)}%`;
+            
+            if (metric === 'cpu' && coreCount !== null) {
+                document.getElementById('cpuCores').textContent = `(${coreCount} cores)`;
+            }
+            
+            // Change color based on usage
+            if (value < 50) {
+                progress.style.backgroundColor = '#4CAF50'; // Green
+            } else if (value < 80) {
+                progress.style.backgroundColor = '#FFA500'; // Orange
+            } else {
+                progress.style.backgroundColor = '#FF0000'; // Red
+            }
+        }
+
+        // Update metrics every second
+        setInterval(updateMetrics, 1000);
+    </script>
+</body>
+</html>
