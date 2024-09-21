@@ -68,11 +68,20 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
                             if (isPercentage) {
                                 return value + '%';
                             } else {
-                                return value.toFixed(2);
+                                return value.toFixed(0);  // Changed to 0 decimal places
                             }
-                        }
+                        },
+                        maxTicksLimit: 6  // Limit the number of ticks
                     },
-                    max: fixedMax // Set a fixed maximum if provided
+                    max: fixedMax,  // Keep this line
+                    afterDataLimits: (scale) => {
+                        if (!isPercentage && !fixedMax) {
+                            // Round up to the nearest hundred
+                            scale.max = Math.ceil(scale.max / 100) * 100;
+                            // Ensure we have at least 5 ticks
+                            scale.ticks.stepSize = Math.max(20, Math.floor(scale.max / 5));
+                        }
+                    }
                 }
             },
             plugins: {
