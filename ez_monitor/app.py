@@ -125,7 +125,7 @@ def update_metrics():
         }
         with metrics_lock:
             metrics = new_metrics
-        time.sleep(0.5)  # Update every 500ms
+        time.sleep(2)  # Update every 2 seconds
 
 @app.route('/')
 def index():

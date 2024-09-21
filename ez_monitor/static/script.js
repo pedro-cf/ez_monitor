@@ -5,7 +5,8 @@ let gpuMax = 0;
 const diskSelector = document.getElementById('diskSelector');
 
 let cpuChart, memoryChart, diskChart, gpuChart;
-const maxDataPoints = 120; // Show last 60 seconds of data
+const maxDataPoints = 1800; // Show last 60 minutes of data (60 * 60 / 2 = 1800)
+const updateInterval = 2000; // Update every 2000 milliseconds (2 seconds)
 
 function createChart(ctx, label) {
     return new Chart(ctx, {
@@ -43,7 +44,7 @@ function createChart(ctx, label) {
                     },
                     ticks: {
                         color: 'rgba(255, 255, 255, 0.7)',
-                        maxTicksLimit: 6,
+                        maxTicksLimit: 12, // Show 12 ticks on x-axis
                         maxRotation: 0,
                         font: {
                             size: 10
@@ -51,8 +52,7 @@ function createChart(ctx, label) {
                         callback: function(value, index, values) {
                             return new Date(value).toLocaleTimeString('en-GB', { 
                                 hour: '2-digit', 
-                                minute: '2-digit', 
-                                second: '2-digit' 
+                                minute: '2-digit'
                             });
                         }
                     }
@@ -95,7 +95,7 @@ function updateChart(chart, value) {
         chart.data.datasets[0].data.shift();
     }
 
-    chart.update('none'); // Use 'none' to disable animations for smoother updates
+    chart.update('none');
 }
 
 function initCharts() {
@@ -256,8 +256,8 @@ function updateProgressColor(progressElement, value) {
 // Update metrics when disk selection changes
 diskSelector.addEventListener('change', updateMetrics);
 
-// Update metrics every 500 milliseconds
-setInterval(updateMetrics, 500);
+// Update metrics every 2 seconds
+setInterval(updateMetrics, updateInterval);
 
 // Initialize charts and fetch initial data when the page loads
 document.addEventListener('DOMContentLoaded', function() {
