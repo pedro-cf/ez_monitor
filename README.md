@@ -72,10 +72,6 @@ ez_monitor requires the following:
 * py-cpuinfo
 * GPUtil
 
-## Configuration
-
-You can use command-line arguments to customize the behavior of the application, such as changing the port number, adjusting the metrics update interval, or setting the maximum number of data points to retain.
-
 ## License
 
 ez_monitor is released under the MIT License. See the [LICENSE](LICENSE) file for details.
