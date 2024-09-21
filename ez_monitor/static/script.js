@@ -212,8 +212,8 @@ function updateDiskMetric(disk) {
     freeElement.textContent = `Free: ${disk.free}`;
     
     staticInfoElement.innerHTML = `
+        Device: ${disk.device}<br>    
         Remote: ${disk.remote}<br>
-        Device: ${disk.device}<br>
         &nbsp;
     `;
     
