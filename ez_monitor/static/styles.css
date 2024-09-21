@@ -1,20 +1,23 @@
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-family: Arial, sans-serif;
     background-color: #000;
     color: #fff;
     margin: 0;
     padding: 20px;
     font-size: 14px;
     line-height: 1.5;
+    min-width: 1200px; /* Minimum width to maintain 4 columns */
 }
 .dashboard {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping by default */
     gap: 20px;
+    min-width: 1160px; /* Minimum width for the dashboard */
 }
 .metric-container {
-    width: calc(25% - 15px); /* Change to 4 columns */
-    height: 400px; /* Keep the increased height */
+    width: calc(25% - 15px); /* Always 25% width for 4 columns */
+    min-width: 275px; /* Minimum width for each container */
+    height: 400px;
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
@@ -150,4 +153,28 @@ canvas {
     width: 100% !important;
     height: 100% !important;
     margin-top: 10px;
+}
+
+@media (max-width: 1200px) {
+    body {
+        padding: 10px;
+        min-width: auto; /* Allow body to shrink on very small screens */
+    }
+    
+    .dashboard {
+        flex-wrap: wrap;
+        min-width: auto; /* Allow dashboard to shrink on very small screens */
+        justify-content: center;
+    }
+    
+    .metric-container {
+        width: calc(50% - 10px); /* 2 columns on smaller screens */
+        min-width: auto; /* Allow containers to shrink on very small screens */
+    }
+}
+
+@media (max-width: 600px) {
+    .metric-container {
+        width: 100%; /* 1 column on very small screens */
+    }
 }
