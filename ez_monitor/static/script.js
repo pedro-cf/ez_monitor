@@ -288,7 +288,7 @@ function updateDiskIOMetric(diskIO) {
         <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
     infoElement.innerHTML = `
-        &nbsp;<br>
+        Filesystem: ${diskIO.filesystem || 'Unknown'}<br>
         &nbsp;<br>
         &nbsp;
     `;

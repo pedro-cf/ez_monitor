@@ -92,13 +92,15 @@ def get_disk_info(path='/'):
             'device': partition_info.get('device', 'Unknown'),
             'mountpoint': partition_info.get('mountpoint', 'Unknown'),
             'type': get_disk_type(partition_info),
-            'remote': 'Yes' if partition_info.get('remote', False) else 'No'
+            'remote': 'Yes' if partition_info.get('remote', False) else 'No',
+            'filesystem': partition_info.get('fstype', 'Unknown')  # Add this line
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
         return {
             'total': "N/A", 'used': "N/A", 'free': "N/A", 'percent': 0,
-            'device': "N/A", 'mountpoint': "N/A", 'type': "N/A", 'remote': "N/A"
+            'device': "N/A", 'mountpoint': "N/A", 'type': "N/A", 'remote': "N/A",
+            'filesystem': "N/A"  # Add this line
         }
 
 def get_partition_info(path):
@@ -107,7 +109,8 @@ def get_partition_info(path):
     return {
         'device': partition.device if partition else 'Unknown',
         'mountpoint': partition.mountpoint if partition else 'Unknown',
-        'remote': 'remote' in partition.opts if partition else False
+        'remote': 'remote' in partition.opts if partition else False,
+        'fstype': partition.fstype if partition else 'Unknown'  # Add this line
     }
 
 def get_disk_type(partition_info):
@@ -145,7 +148,7 @@ def get_disk_io():
         if platform.system() == 'Windows':
             io_counters = psutil.disk_io_counters()
             logger.debug(f"Windows disk I/O: {io_counters}")
-            return {
+            disk_info = {
                 'read_bytes': io_counters.read_bytes,
                 'write_bytes': io_counters.write_bytes,
                 'read_count': io_counters.read_count,
@@ -154,16 +157,21 @@ def get_disk_io():
         else:  # Linux and other Unix-like systems
             io_counters = psutil.disk_io_counters(perdisk=True)
             logger.debug(f"Linux disk I/O (per disk): {io_counters}")
-            total_read_bytes = sum(disk.read_bytes for disk in io_counters.values())
-            total_write_bytes = sum(disk.write_bytes for disk in io_counters.values())
-            total_read_count = sum(disk.read_count for disk in io_counters.values())
-            total_write_count = sum(disk.write_count for disk in io_counters.values())
-            return {
-                'read_bytes': total_read_bytes,
-                'write_bytes': total_write_bytes,
-                'read_count': total_read_count,
-                'write_count': total_write_count,
+            disk_info = {
+                'read_bytes': sum(disk.read_bytes for disk in io_counters.values()),
+                'write_bytes': sum(disk.write_bytes for disk in io_counters.values()),
+                'read_count': sum(disk.read_count for disk in io_counters.values()),
+                'write_count': sum(disk.write_count for disk in io_counters.values()),
             }
+        
+        # Add filesystem type information
+        partitions = psutil.disk_partitions()
+        if partitions:
+            disk_info['filesystem'] = partitions[0].fstype
+        else:
+            disk_info['filesystem'] = 'Unknown'
+        
+        return disk_info
     except Exception as e:
         logger.error(f"Error getting disk I/O info: {e}")
         return {
@@ -171,6 +179,7 @@ def get_disk_io():
             'write_bytes': 0,
             'read_count': 0,
             'write_count': 0,
+            'filesystem': 'Unknown'
         }
 
 def get_network_usage():
@@ -226,6 +235,9 @@ def update_metrics():
         current_net_usage = get_network_usage()
 
         disk_io_speed, net_speed = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed)
+        
+        # Add the filesystem information to disk_io_speed
+        disk_io_speed['filesystem'] = current_disk_io.get('filesystem', 'Unknown')
 
         logger.debug(f"Current disk I/O: {current_disk_io}")
         logger.debug(f"Calculated disk I/O speed: {disk_io_speed}")
