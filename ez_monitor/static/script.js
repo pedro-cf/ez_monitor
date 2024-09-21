@@ -67,6 +67,8 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
                         callback: function(value) {
                             if (isPercentage) {
                                 return value + '%';
+                            } else if (label === 'Network Usage (KB/s)') {
+                                return value.toFixed(0) + ' KB/s';
                             } else {
                                 return value.toFixed(2);
                             }
@@ -124,7 +126,7 @@ function initCharts() {
     diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Space (GB)', false);
     gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU Usage', true, 100);
     diskIOChart = createChart(document.getElementById('diskIOChart').getContext('2d'), 'Disk I/O (MB/s)', false);
-    networkChart = createChart(document.getElementById('networkChart').getContext('2d'), 'Network Usage (MB/s)', false);
+    networkChart = createChart(document.getElementById('networkChart').getContext('2d'), 'Network Usage (KB/s)', false);
 }
 
 function updateCPUMetric(cpu) {
@@ -317,9 +319,9 @@ function updateNetworkMetric(network) {
     progress.style.width = `${percent}%`;
     percentElement.textContent = `${percent.toFixed(1)}%`;
     dynamicInfoElement.innerHTML = `
-        <div class="value-box">Upload: ${network.upload_speed.toFixed(2)} MB/s</div>
-        <div class="value-box">Download: ${network.download_speed.toFixed(2)} MB/s</div>
-        <div class="value-box">Total: ${totalSpeed.toFixed(2)} MB/s</div>
+        <div class="value-box">Upload: ${(network.upload_speed * 1024).toFixed(2)} KB/s</div>
+        <div class="value-box">Download: ${(network.download_speed * 1024).toFixed(2)} KB/s</div>
+        <div class="value-box">Total: ${(totalSpeed * 1024).toFixed(2)} KB/s</div>
     `;
     
     // Add simplified static network information
@@ -348,7 +350,7 @@ function updateNetworkMetric(network) {
         maxLine.style.display = 'block';
     }
     
-    updateChart(networkChart, totalSpeed);
+    updateChart(networkChart, totalSpeed * 1024);  // Convert to KB/s for the chart
 }
 
 function updateMetrics() {
