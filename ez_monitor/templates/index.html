@@ -14,6 +14,7 @@
         }
         .dashboard {
             display: flex;
+            flex-wrap: wrap;
             gap: 20px;
         }
         .metric-container {
@@ -29,43 +30,58 @@
             background-color: #333;
             border-radius: 15px;
             overflow: hidden;
+            margin-bottom: 10px;
         }
         .progress {
             height: 100%;
             width: 0;
-            transition: width 0.5s ease-in-out;
+            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
         }
         .label {
             margin-bottom: 10px;
             font-size: 18px;
             font-weight: bold;
         }
-        .core-count {
+        .info {
             font-size: 14px;
-            font-style: italic;
-            margin-left: 10px;
-        }
-        .value {
             margin-top: 10px;
-            font-size: 16px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .value-box {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        .dynamic-info {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
         <div class="metric-container">
-            <div class="label">CPU Usage <span id="cpuCores" class="core-count"></span></div>
+            <div class="label">CPU Usage</div>
             <div class="progress-bar">
                 <div id="cpuProgress" class="progress"></div>
             </div>
-            <div id="cpuValue" class="value"></div>
+            <div id="cpuPercent" class="value-box"></div>
+            <div id="cpuUsage" class="value-box"></div>
+            <div id="cpuInfo" class="info"></div>
+            <div id="cpuDynamicInfo" class="dynamic-info"></div>
         </div>
         <div class="metric-container">
             <div class="label">Memory Usage</div>
             <div class="progress-bar">
                 <div id="memoryProgress" class="progress"></div>
             </div>
-            <div id="memoryValue" class="value"></div>
+            <div id="memoryPercent" class="value-box"></div>
+            <div id="memoryUsage" class="value-box"></div>
+            <div id="memoryInfo" class="info"></div>
         </div>
     </div>
 
@@ -74,31 +90,56 @@
             fetch('/metrics')
                 .then(response => response.json())
                 .then(data => {
-                    updateMetric('cpu', data.cpu, data.cpu_count);
-                    updateMetric('memory', data.memory);
+                    updateCPUMetric(data.cpu);
+                    updateMemoryMetric(data.memory);
                 })
                 .catch(error => console.error('Error fetching metrics:', error));
         }
 
-        function updateMetric(metric, value, coreCount = null) {
-            const progress = document.getElementById(`${metric}Progress`);
-            const valueElement = document.getElementById(`${metric}Value`);
+        function updateCPUMetric(cpu) {
+            const progress = document.getElementById('cpuProgress');
+            const percentElement = document.getElementById('cpuPercent');
+            const usageElement = document.getElementById('cpuUsage');
+            const infoElement = document.getElementById('cpuInfo');
+            const dynamicInfoElement = document.getElementById('cpuDynamicInfo');
             
-            progress.style.width = `${value}%`;
-            valueElement.textContent = `${value.toFixed(1)}%`;
+            progress.style.width = `${cpu.usage}%`;
+            percentElement.textContent = `${cpu.usage.toFixed(1)}%`;
+            usageElement.textContent = `${cpu.count} cores`;
+            infoElement.innerHTML = `
+                Name: ${cpu.name}<br>
+                Frequency: ${cpu.frequency}
+            `;
+            dynamicInfoElement.innerHTML = `
+                <div class="value-box">Tasks: ${cpu.tasks}</div>
+                <div class="value-box">Threads: ${cpu.threads}</div>
+                <div class="value-box">Running: ${cpu.running}</div>
+                <div class="value-box">Load Avg: ${cpu.load_average}</div>
+            `;
             
-            if (metric === 'cpu' && coreCount !== null) {
-                document.getElementById('cpuCores').textContent = `(${coreCount} cores)`;
-            }
+            updateProgressColor(progress, cpu.usage);
+        }
+
+        function updateMemoryMetric(memory) {
+            const progress = document.getElementById('memoryProgress');
+            const percentElement = document.getElementById('memoryPercent');
+            const usageElement = document.getElementById('memoryUsage');
+            const infoElement = document.getElementById('memoryInfo');
             
-            // Change color based on usage
-            if (value < 50) {
-                progress.style.backgroundColor = '#4CAF50'; // Green
-            } else if (value < 80) {
-                progress.style.backgroundColor = '#FFA500'; // Orange
-            } else {
-                progress.style.backgroundColor = '#FF0000'; // Red
-            }
+            progress.style.width = `${memory.percent}%`;
+            percentElement.textContent = `${memory.percent.toFixed(1)}%`;
+            usageElement.textContent = `${memory.used} / ${memory.total}`;
+            infoElement.innerHTML = `
+                Total RAM: ${memory.total}<br>
+                Swap Total: ${memory.swap_total}
+            `;
+            
+            updateProgressColor(progress, memory.percent);
+        }
+
+        function updateProgressColor(progressElement, value) {
+            const hue = (1 - value / 100) * 120;
+            progressElement.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
         }
 
         // Update metrics every second
