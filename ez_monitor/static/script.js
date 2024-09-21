@@ -43,8 +43,18 @@ function createChart(ctx, label) {
                     },
                     ticks: {
                         color: 'rgba(255, 255, 255, 0.7)',
-                        maxTicksLimit: 5,
-                        maxRotation: 0
+                        maxTicksLimit: 6,
+                        maxRotation: 0,
+                        font: {
+                            size: 10
+                        },
+                        callback: function(value, index, values) {
+                            return new Date(value).toLocaleTimeString('en-GB', { 
+                                hour: '2-digit', 
+                                minute: '2-digit', 
+                                second: '2-digit' 
+                            });
+                        }
                     }
                 },
                 y: {
@@ -77,7 +87,7 @@ function createChart(ctx, label) {
 
 function updateChart(chart, value) {
     const now = new Date();
-    chart.data.labels.push(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    chart.data.labels.push(now);
     chart.data.datasets[0].data.push(value);
 
     if (chart.data.labels.length > maxDataPoints) {
@@ -249,5 +259,11 @@ diskSelector.addEventListener('change', updateMetrics);
 // Update metrics every 500 milliseconds
 setInterval(updateMetrics, 500);
 
-// Initialize charts when the page loads
-document.addEventListener('DOMContentLoaded', initCharts);
+// Initialize charts and fetch initial data when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    updateMetrics();
+});
+
+// Remove the old event listener for DOMContentLoaded
+// document.addEventListener('DOMContentLoaded', initCharts);
