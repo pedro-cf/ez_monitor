@@ -39,6 +39,18 @@ def get_memory_info():
         'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
     }
 
+def get_disk_info():
+    disk = psutil.disk_usage('/')
+    read_bytes, write_bytes = psutil.disk_io_counters().read_bytes, psutil.disk_io_counters().write_bytes
+    return {
+        'total': f"{disk.total / (1024 ** 3):.2f} GB",
+        'used': f"{disk.used / (1024 ** 3):.2f} GB",
+        'free': f"{disk.free / (1024 ** 3):.2f} GB",
+        'percent': disk.percent,
+        'read': f"{read_bytes / (1024 ** 3):.2f} GB",
+        'write': f"{write_bytes / (1024 ** 3):.2f} GB"
+    }
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -48,6 +60,7 @@ def metrics():
     return jsonify({
         'cpu': get_cpu_info(),
         'memory': get_memory_info(),
+        'disk': get_disk_info(),
         'timestamp': int(time.time() * 1000)
     })
 
