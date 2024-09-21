@@ -14,9 +14,9 @@ import socket
 import requests
 import logging
 
-# Set up logging
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger(__name__)
+# Set up logging at the module level
+logging.basicConfig(level=logging.WARNING, format='%(levelname)s:%(name)s:%(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -61,16 +61,16 @@ def get_load_average():
 def get_memory_info():
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
-    used_gb = mem.used / (1024 ** 3)
     total_gb = mem.total / (1024 ** 3)
-    
-    used_str = f"{used_gb * 1024:.2f} MB" if used_gb < 1 else f"{used_gb:.2f} GB"
+    used_gb = mem.used / (1024 ** 3)
     
     return {
-        'total': f"{total_gb:.2f} GB",
-        'used': used_str,
+        'total': f"{total_gb:.2f}",
+        'used': f"{used_gb:.2f}",
         'percent': mem.percent,
-        'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
+        'swap_total': f"{swap.total / (1024 ** 3):.2f}",
+        'swap_used': f"{swap.used / (1024 ** 3):.2f}",
+        'swap_percent': swap.percent
     }
 
 # Disk Information
@@ -303,13 +303,12 @@ def parse_arguments():
     parser.add_argument('--debug', action='store_true', help='Run in debug mode')
     return parser.parse_args()
 
-if __name__ == '__main__':
+def main():
     args = parse_arguments()
     
-    # Set up logging based on debug flag
-    log_level = logging.DEBUG if args.debug else logging.WARNING
-    logging.basicConfig(level=log_level, format='%(levelname)s:%(name)s:%(message)s')
-    logger = logging.getLogger(__name__)
+    # Update logging level based on debug flag
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
     
     print(f"Starting ez_monitor with the following configuration:")
     print(f"Port: {args.port}")
@@ -327,3 +326,6 @@ if __name__ == '__main__':
     
     # Run the Flask app with auto-reload when in debug mode
     app.run(debug=args.debug, use_reloader=args.debug, threaded=True, host='0.0.0.0', port=args.port)
+
+if __name__ == '__main__':
+    main()
