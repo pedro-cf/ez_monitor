@@ -203,7 +203,7 @@ function updateGPUMetric(gpu) {
     const infoElement = document.getElementById('gpuInfo');
     const maxLine = document.getElementById('gpuMaxLine');
     
-    if (gpu && typeof gpu.percent !== 'undefined') {
+    if (gpu && !gpu.error) {
         progress.style.width = `${gpu.percent}%`;
         percentElement.textContent = `${gpu.percent.toFixed(1)}%`;
         dynamicInfoElement.innerHTML = `
@@ -213,8 +213,7 @@ function updateGPUMetric(gpu) {
         infoElement.innerHTML = `
             Name: ${gpu.name}<br>
             VRAM: ${gpu.memory_total}<br>
-            Driver Version: ${gpu.driver}<br>
-            CUDA Version: ${gpu.cuda_version}
+            Driver Version: ${gpu.driver}
         `;
         
         updateProgressColor(progress, gpu.percent);
@@ -228,7 +227,7 @@ function updateGPUMetric(gpu) {
         updateChart(gpuChart, gpu.percent);
     } else {
         console.error('Invalid or missing GPU data:', gpu);
-        infoElement.innerHTML = 'No GPU data available';
+        infoElement.innerHTML = gpu.error || 'No GPU data available';
     }
 }
 

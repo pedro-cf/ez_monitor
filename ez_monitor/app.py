@@ -6,6 +6,7 @@ import cpuinfo
 import shutil
 import GPUtil
 import sys
+import platform
 from functools import lru_cache
 from threading import Thread, Lock
 
@@ -106,13 +107,12 @@ def update_gpu_info():
                 'memory_total': f"{gpu.memoryTotal} MB",
                 'temperature': gpu.temperature,
                 'driver': gpu.driver,
-                'cuda_version': gpu.cuda_version if hasattr(gpu, 'cuda_version') else 'N/A'
             }
         else:
-            return None
+            return {'error': 'No GPU found'}
     except Exception as e:
         print(f"Error getting GPU info: {e}")
-        return None
+        return {'error': str(e)}
 
 def update_metrics():
     global metrics
@@ -149,4 +149,5 @@ if __name__ == '__main__':
     metrics_thread = Thread(target=update_metrics, daemon=True)
     metrics_thread.start()
     
-    app.run(debug=True, threaded=True)
+    # Use 0.0.0.0 to make the app accessible from other devices on the network
+    app.run(debug=True, threaded=True, host='0.0.0.0')
