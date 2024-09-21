@@ -17,7 +17,7 @@ body {
 .metric-container {
     width: calc(33.33% - 14px); /* Adjusted for 3 columns */
     min-width: 300px; /* Adjusted minimum width */
-    height: 440px; /* Increased from 400px to accommodate larger charts */
+    height: 460px; /* Increased from 440px to accommodate more content */
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
@@ -71,7 +71,9 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start; /* Changed from space-between */
+    height: auto; /* Changed from fixed height */
+    overflow-y: visible; /* Changed from auto */
 }
 .value-box {
     display: inline-block;

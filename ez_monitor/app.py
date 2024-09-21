@@ -10,6 +10,8 @@ import platform
 from functools import lru_cache
 from threading import Thread, Lock
 import argparse
+import socket
+import requests
 
 app = Flask(__name__)
 
@@ -151,12 +153,41 @@ def get_network_usage():
         'packets_recv': net_counters.packets_recv,
     }
 
+# Network Information
+def get_static_network_info():
+    interfaces = {}
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        try:
+            public_ip = requests.get('https://api.ipify.org').text
+        except:
+            public_ip = "Unable to retrieve"
+
+        interfaces['general'] = {
+            'hostname': hostname,
+            'local_ip': local_ip,
+            'public_ip': public_ip
+        }
+
+        for interface, addrs in psutil.net_if_addrs().items():
+            interfaces[interface] = {
+                'mac': next((addr.address for addr in addrs if addr.family == psutil.AF_LINK), 'Unknown'),
+                'ipv4': next((addr.address for addr in addrs if addr.family == socket.AF_INET), 'Unknown'),
+                'ipv6': next((addr.address for addr in addrs if addr.family == socket.AF_INET6), 'Unknown')
+            }
+    except Exception as e:
+        print(f"Error getting network info: {e}")
+    return interfaces
+
 # Metrics Update
 def update_metrics():
     global metrics
     last_disk_io = get_disk_io()
     last_net_usage = get_network_usage()
     last_time = time.time()
+
+    static_network_info = get_static_network_info()  # Add this line
 
     while True:
         current_time = time.time()
@@ -173,7 +204,7 @@ def update_metrics():
             'disk': {p.mountpoint: get_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
             'gpu': get_gpu_info(),
             'disk_io': disk_io_speed,
-            'network': net_speed,
+            'network': {**net_speed, 'static_info': static_network_info},  # Modify this line
         }
         with metrics_lock:
             metrics.update(new_metrics)
@@ -215,7 +246,7 @@ def get_metrics():
             'disk': metrics.get('disk', {}).get(selected_disk, get_disk_info(selected_disk)),
             'gpu': metrics.get('gpu', {}),
             'disk_io': metrics.get('disk_io', {}),
-            'network': metrics.get('network', {})
+            'network': metrics.get('network', {})  # This now includes static_info
         }
     return jsonify(response)
 

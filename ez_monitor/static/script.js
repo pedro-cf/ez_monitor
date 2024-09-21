@@ -139,7 +139,8 @@ function updateCPUMetric(cpu) {
     infoElement.innerHTML = `
         Name: ${cpu.name}<br>
         Frequency: ${cpu.frequency}<br>
-        Cores: ${cpu.count}
+        Cores: ${cpu.count}<br>
+        &nbsp;
     `;
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Tasks: ${cpu.tasks}</div>
@@ -175,7 +176,8 @@ function updateMemoryMetric(memory) {
     
     infoElement.innerHTML = `
         Total RAM: ${memory.total}<br>
-        Swap Total: ${memory.swap_total}
+        Swap Total: ${memory.swap_total}<br>
+        &nbsp;
     `;
     
     updateProgressColor(progress, memory.percent);
@@ -211,7 +213,8 @@ function updateDiskMetric(disk) {
     
     staticInfoElement.innerHTML = `
         Remote: ${disk.remote}<br>
-        Device: ${disk.device}
+        Device: ${disk.device}<br>
+        &nbsp;
     `;
     
     updateProgressColor(progress, disk.percent);
@@ -249,7 +252,7 @@ function updateGPUMetric(gpu) {
         infoElement.innerHTML = `
             Name: ${gpu.name}<br>
             VRAM: ${gpu.memory_total}<br>
-            Driver Version: ${gpu.driver}
+            Driver: ${gpu.driver}
         `;
         
         updateProgressColor(progress, gpu.percent);
@@ -285,6 +288,9 @@ function updateDiskIOMetric(diskIO) {
         <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
     infoElement.innerHTML = `
+        &nbsp;<br>
+        &nbsp;<br>
+        &nbsp;
     `;
     
     updateProgressColor(progress, percent);
@@ -313,10 +319,26 @@ function updateNetworkMetric(network) {
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Upload: ${network.upload_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Download: ${network.download_speed.toFixed(2)} MB/s</div>
-        <div class="value-box">Total Network: ${totalSpeed.toFixed(2)} MB/s</div>
+        <div class="value-box">Total: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
-    infoElement.innerHTML = `
-    `;
+    
+    // Add simplified static network information
+    let staticInfoHTML = '';
+    if (network.static_info.general) {
+        const general = network.static_info.general;
+        staticInfoHTML += `Hostname: ${general.hostname}<br>`;
+        staticInfoHTML += `Local IP: ${general.local_ip}<br>`;
+        staticInfoHTML += `Public IP: ${general.public_ip}<br>`;
+    }
+    
+    const relevantInterfaces = Object.entries(network.static_info).filter(([name, info]) => 
+        name !== 'general' && !name.includes('Loopback') && !name.includes('VMware') && info.ipv4 !== 'Unknown' && info.ipv4 !== '127.0.0.1'
+    );
+    
+    for (const [interface, info] of relevantInterfaces.slice(0, 2)) {  // Show only up to 2 interfaces
+        staticInfoHTML += `${interface}: ${info.ipv4}<br>`;
+    }
+    infoElement.innerHTML = staticInfoHTML;
     
     updateProgressColor(progress, percent);
 
