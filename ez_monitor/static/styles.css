@@ -108,3 +108,11 @@ select {
     border-radius: 5px;
     font-size: 14px;
 }
+
+.disk-info-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}

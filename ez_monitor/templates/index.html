@@ -48,8 +48,11 @@
                 <div id="diskProgress" class="progress"></div>
                 <div id="diskMaxLine" class="max-line"></div>
             </div>
-            <div id="diskUsage" class="value-box"></div>
-            <div id="diskInfo" class="info"></div>
+            <div class="disk-info-row">
+                <div id="diskUsage" class="value-box"></div>
+                <div id="diskFree" class="value-box"></div>
+            </div>
+            <div id="diskStaticInfo" class="info"></div>
         </div>
     </div>
 
@@ -118,16 +121,21 @@
             const progress = document.getElementById('diskProgress');
             const percentElement = document.getElementById('diskPercent');
             const usageElement = document.getElementById('diskUsage');
-            const infoElement = document.getElementById('diskInfo');
+            const freeElement = document.getElementById('diskFree');
+            const staticInfoElement = document.getElementById('diskStaticInfo');
             const maxLine = document.getElementById('diskMaxLine');
             
             progress.style.width = `${disk.percent}%`;
             percentElement.textContent = `${disk.percent.toFixed(1)}%`;
             usageElement.textContent = `${disk.used} / ${disk.total}`;
-            infoElement.innerHTML = `
-                Free: ${disk.free}<br>
-                Read: ${disk.read}<br>
-                Write: ${disk.write}
+            freeElement.textContent = `Free: ${disk.free}`;
+            
+            staticInfoElement.innerHTML = `
+                Type: ${disk.type}<br>
+                Name: ${disk.name}<br>
+                Remote: ${disk.remote}<br>
+                File System: ${disk.filesystem}<br>
+                Mount Point: ${disk.mountpoint}
             `;
             
             updateProgressColor(progress, disk.percent);

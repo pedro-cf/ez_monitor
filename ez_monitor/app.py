@@ -60,18 +60,20 @@ def get_disk_info(path='/'):
         # Calculate percentage
         percent = (used / total) * 100
 
-        # Get I/O information
-        io_counters = psutil.disk_io_counters(perdisk=True)
-        disk_name = os.path.basename(path) if path != '/' else 'C:'
-        io_counter = io_counters.get(disk_name, psutil.disk_io_counters())
+        # Get disk type and other information
+        partitions = psutil.disk_partitions()
+        partition_info = next((p for p in partitions if p.mountpoint == path), None)
         
         return {
             'total': f"{total_gb:.2f} GB",
             'used': f"{used_gb:.2f} GB",
             'free': f"{free_gb:.2f} GB",
             'percent': round(percent, 1),
-            'read': f"{io_counter.read_bytes / (1024 ** 3):.2f} GB",
-            'write': f"{io_counter.write_bytes / (1024 ** 3):.2f} GB"
+            'type': partition_info.fstype if partition_info else 'Unknown',
+            'name': os.path.basename(path) if path != '/' else 'C:',
+            'remote': 'Yes' if partition_info and 'remote' in partition_info.opts else 'No',
+            'filesystem': partition_info.fstype if partition_info else 'Unknown',
+            'mountpoint': partition_info.mountpoint if partition_info else 'Unknown'
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
@@ -80,8 +82,11 @@ def get_disk_info(path='/'):
             'used': "N/A",
             'free': "N/A",
             'percent': 0,
-            'read': "N/A",
-            'write': "N/A"
+            'type': "N/A",
+            'name': "N/A",
+            'remote': "N/A",
+            'filesystem': "N/A",
+            'mountpoint': "N/A"
         }
 
 def get_available_disks():
