@@ -1,6 +1,6 @@
 # ez_monitor
 
-ez_monitor is a simple web application that allows you to view the logs of your Docker containers in a web page. It provides a real-time view of your logs, which can be easily accessed through a web interface.
+ez_monitor is a simple web application that provides real-time system metrics visualization for your machine. It displays CPU, memory, disk, GPU, disk I/O, and network usage in an easy-to-read dashboard.
 
 ![image](https://placeholder-for-your-screenshot.com)
 
@@ -23,7 +23,7 @@ cd ez_monitor
 3. Install the required dependencies:
 
 ```
-pip install -r ez_monitor/requirements.txt
+pip install -r requirements.txt
 ```
 
 4. Run the application:
@@ -32,39 +32,54 @@ pip install -r ez_monitor/requirements.txt
 python ez_monitor/app.py
 ```
 
-5. Access the logs in your web browser:
+5. Access the dashboard in your web browser:
 
-Open a web browser and navigate to `http://localhost:5000/`. You will see a web page displaying logs from all running Docker containers.
+Open a web browser and navigate to `http://localhost:5000/`. You will see a web page displaying real-time system metrics.
 
-The logs are displayed in real-time, with the most recent logs at the bottom. The logs are refreshed automatically to show the latest changes.
+### Command-line Arguments
 
-You can adjust the refresh rate using the provided controls on the web interface.
+You can customize the behavior of ez_monitor using the following command-line arguments:
+
+- `-p`, `--port`: Specify the port to run the server on (default: 5000)
+- `-r`, `--refresh-rate`: Set the refresh rate in seconds (default: 2.0)
+- `-m`, `--max-data-points`: Set the maximum number of data points to keep (default: 1800)
+- `--debug`: Run the application in debug mode
+
+Example:
+```
+python ez_monitor/app.py -p 8080 -r 1.5 -m 3600
+```
+
+This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, and keep up to 3600 data points.
 
 ## Features
 
-- Real-time log streaming from Docker containers
+- Real-time system metrics visualization
 - Web-based interface for easy access
-- Support for multiple containers
-- Automatic container discovery
-- Customizable refresh rate
+- Displays CPU, memory, disk, GPU, disk I/O, and network usage
+- Interactive charts for historical data
+- Customizable disk selection for multi-disk systems
+- Configurable refresh rate and data retention
 
 ## Requirements
 
 ez_monitor requires the following:
 
-* Docker
 * Python 3.7+
+* Flask
+* psutil
+* py-cpuinfo
+* GPUtil
 
 ## Configuration
 
-You can modify the `ez_monitor/app.py` file to customize the behavior of the application, such as changing the port number or adjusting the log fetching logic.
+You can use command-line arguments to customize the behavior of the application, such as changing the port number, adjusting the metrics update interval, or setting the maximum number of data points to retain.
 
 ## License
 
 ez_monitor is released under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Support
-
 
 If you find this project useful, consider buying me a coffee! Donations help keep this project going and are greatly appreciated.
 
