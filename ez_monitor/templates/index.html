@@ -9,38 +9,35 @@
 <body>
     <div class="dashboard">
         <div class="metric-container">
-            <div class="label">CPU</div>
+            <div class="label">CPU <span id="cpuPercent" class="value-box percentage"></span></div>
             <div class="progress-bar">
                 <div id="cpuProgress" class="progress"></div>
                 <div id="cpuMaxLine" class="max-line"></div>
             </div>
-            <div id="cpuPercent" class="value-box"></div>
             <div id="cpuDynamicInfo" class="dynamic-info"></div>
             <div id="cpuInfo" class="info"></div>
         </div>
         <div class="metric-container">
-            <div class="label">Memory</div>
+            <div class="label">Memory <span id="memoryPercent" class="value-box percentage"></span></div>
             <div class="progress-bar">
                 <div id="memoryProgress" class="progress"></div>
                 <div id="memoryMaxLine" class="max-line"></div>
             </div>
-            <div id="memoryPercent" class="value-box"></div>
             <div id="memoryUsage" class="value-box"></div>
             <div id="memoryInfo" class="info"></div>
         </div>
         <div class="metric-container">
-            <div class="label">GPU</div>
+            <div class="label">GPU <span id="gpuPercent" class="value-box percentage"></span></div>
             <div class="progress-bar">
                 <div id="gpuProgress" class="progress"></div>
                 <div id="gpuMaxLine" class="max-line"></div>
             </div>
-            <div id="gpuPercent" class="value-box"></div>
             <div id="gpuDynamicInfo" class="dynamic-info"></div>
             <div id="gpuInfo" class="info"></div>
         </div>
         <div class="metric-container">
             <div class="label">
-                Disk
+                Disk <span id="diskPercent" class="value-box percentage"></span>
                 <select id="diskSelector" class="disk-selector">
                     {% for disk in disks %}
                     <option value="{{ disk }}">{{ disk }}</option>
@@ -51,7 +48,6 @@
                 <div id="diskProgress" class="progress"></div>
                 <div id="diskMaxLine" class="max-line"></div>
             </div>
-            <div id="diskPercent" class="value-box"></div>
             <div id="diskUsage" class="value-box"></div>
             <div id="diskInfo" class="info"></div>
         </div>
@@ -72,7 +68,7 @@
             const maxLine = document.getElementById('cpuMaxLine');
             
             progress.style.width = `${cpu.usage}%`;
-            percentElement.textContent = `${cpu.usage.toFixed(1)}% Usage`;
+            percentElement.textContent = `${cpu.usage.toFixed(1)}%`;
             infoElement.innerHTML = `
                 Name: ${cpu.name}<br>
                 Frequency: ${cpu.frequency}<br>
@@ -102,7 +98,7 @@
             const maxLine = document.getElementById('memoryMaxLine');
             
             progress.style.width = `${memory.percent}%`;
-            percentElement.textContent = `${memory.percent.toFixed(1)}% Usage`;
+            percentElement.textContent = `${memory.percent.toFixed(1)}%`;
             usageElement.textContent = `${memory.used} / ${memory.total}`;
             infoElement.innerHTML = `
                 Total RAM: ${memory.total}<br>
@@ -126,7 +122,7 @@
             const maxLine = document.getElementById('diskMaxLine');
             
             progress.style.width = `${disk.percent}%`;
-            percentElement.textContent = `${disk.percent.toFixed(1)}% Usage`;
+            percentElement.textContent = `${disk.percent.toFixed(1)}%`;
             usageElement.textContent = `${disk.used} / ${disk.total}`;
             infoElement.innerHTML = `
                 Free: ${disk.free}<br>
@@ -152,10 +148,10 @@
             
             if (gpu && typeof gpu.percent !== 'undefined') {
                 progress.style.width = `${gpu.percent}%`;
-                percentElement.textContent = `${gpu.percent.toFixed(1)}% Usage`;
+                percentElement.textContent = `${gpu.percent.toFixed(1)}%`;
                 dynamicInfoElement.innerHTML = `
-                    <div class="value-box">Memory: ${gpu.memory_used} / ${gpu.memory_total}</div>
-                    <div class="value-box">Temperature: ${gpu.temperature}°C</div>
+                    <div class="value-box">${gpu.memory_used} / ${gpu.memory_total}</div>
+                    <div class="value-box">${gpu.temperature}°C</div>
                 `;
                 infoElement.innerHTML = `
                     Name: ${gpu.name}<br>
