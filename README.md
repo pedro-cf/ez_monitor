@@ -2,7 +2,8 @@
 
 ez_monitor is a simple web application that provides real-time system metrics visualization for your machine. It displays CPU, memory, disk, GPU, disk I/O, and network usage in an easy-to-read dashboard.
 
-![image](https://placeholder-for-your-screenshot.com)
+![image](https://github.com/user-attachments/assets/1ded3d71-c139-4f70-977b-1758551a4c5e)
+
 
 ## Usage
 
