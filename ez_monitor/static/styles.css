@@ -55,7 +55,9 @@ body {
     margin-bottom: 5px;
 }
 .dynamic-info {
-    display: inline-block;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 .max-line {
     position: absolute;

@@ -29,6 +29,16 @@
             <div id="memoryInfo" class="info"></div>
         </div>
         <div class="metric-container">
+            <div class="label">GPU</div>
+            <div class="progress-bar">
+                <div id="gpuProgress" class="progress"></div>
+                <div id="gpuMaxLine" class="max-line"></div>
+            </div>
+            <div id="gpuPercent" class="value-box"></div>
+            <div id="gpuDynamicInfo" class="dynamic-info"></div>
+            <div id="gpuInfo" class="info"></div>
+        </div>
+        <div class="metric-container">
             <div class="label">
                 Disk
                 <select id="diskSelector" class="disk-selector">
@@ -44,15 +54,6 @@
             <div id="diskPercent" class="value-box"></div>
             <div id="diskUsage" class="value-box"></div>
             <div id="diskInfo" class="info"></div>
-        </div>
-        <div class="metric-container">
-            <div class="label">GPU</div>
-            <div class="progress-bar">
-                <div id="gpuProgress" class="progress"></div>
-                <div id="gpuMaxLine" class="max-line"></div>
-            </div>
-            <div id="gpuPercent" class="value-box"></div>
-            <div id="gpuInfo" class="info"></div>
         </div>
     </div>
 
@@ -145,16 +146,22 @@
         function updateGPUMetric(gpu) {
             const progress = document.getElementById('gpuProgress');
             const percentElement = document.getElementById('gpuPercent');
+            const dynamicInfoElement = document.getElementById('gpuDynamicInfo');
             const infoElement = document.getElementById('gpuInfo');
             const maxLine = document.getElementById('gpuMaxLine');
             
             if (gpu && typeof gpu.percent !== 'undefined') {
                 progress.style.width = `${gpu.percent}%`;
                 percentElement.textContent = `${gpu.percent.toFixed(1)}% Usage`;
+                dynamicInfoElement.innerHTML = `
+                    <div class="value-box">Memory: ${gpu.memory_used} / ${gpu.memory_total}</div>
+                    <div class="value-box">Temperature: ${gpu.temperature}°C</div>
+                `;
                 infoElement.innerHTML = `
                     Name: ${gpu.name}<br>
-                    Memory: ${gpu.memory_used} / ${gpu.memory_total}<br>
-                    Temperature: ${gpu.temperature}°C
+                    VRAM: ${gpu.memory_total}<br>
+                    Driver Version: ${gpu.driver}<br>
+                    CUDA Version: ${gpu.cuda_version}
                 `;
                 
                 updateProgressColor(progress, gpu.percent);

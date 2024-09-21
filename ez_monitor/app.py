@@ -98,7 +98,9 @@ def get_gpu_info():
                 'percent': gpu.load * 100,
                 'memory_used': f"{gpu.memoryUsed} MB",
                 'memory_total': f"{gpu.memoryTotal} MB",
-                'temperature': gpu.temperature
+                'temperature': gpu.temperature,
+                'driver': gpu.driver,
+                'cuda_version': gpu.cuda_version if hasattr(gpu, 'cuda_version') else 'N/A'
             }
         else:
             return None
