@@ -2,17 +2,18 @@ from flask import Flask, render_template, jsonify
 import psutil
 import time
 import os
-import platform
+import cpuinfo
 
 app = Flask(__name__)
 
 def get_cpu_info():
     cpu_freq = psutil.cpu_freq()
-    load_avg = psutil.getloadavg()
+    load_avg = os.getloadavg()
+    cpu_info = cpuinfo.get_cpu_info()
     return {
         'usage': psutil.cpu_percent(),
         'count': psutil.cpu_count(),
-        'name': platform.processor(),
+        'name': cpu_info['brand_raw'],
         'frequency': f"{cpu_freq.current:.0f} MHz",
         'tasks': len(psutil.pids()),
         'threads': sum(p.num_threads() for p in psutil.process_iter()),
@@ -23,10 +24,17 @@ def get_cpu_info():
 def get_memory_info():
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
+    used_gb = mem.used / (1024 ** 3)
+    total_gb = mem.total / (1024 ** 3)
+    
+    if used_gb < 1:
+        used_str = f"{used_gb * 1024:.2f} MB"
+    else:
+        used_str = f"{used_gb:.2f} GB"
+    
     return {
-        'total': f"{mem.total / (1024 ** 3):.2f} GB",
-        'available': f"{mem.available / (1024 ** 3):.2f} GB",
-        'used': f"{mem.used / (1024 ** 3):.2f} GB",
+        'total': f"{total_gb:.2f} GB",
+        'used': used_str,
         'percent': mem.percent,
         'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
     }

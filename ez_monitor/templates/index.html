@@ -58,24 +58,23 @@
             margin-bottom: 5px;
         }
         .dynamic-info {
-            margin-top: 10px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
         <div class="metric-container">
-            <div class="label">CPU Usage</div>
+            <div class="label">CPU</div>
             <div class="progress-bar">
                 <div id="cpuProgress" class="progress"></div>
             </div>
             <div id="cpuPercent" class="value-box"></div>
-            <div id="cpuUsage" class="value-box"></div>
-            <div id="cpuInfo" class="info"></div>
             <div id="cpuDynamicInfo" class="dynamic-info"></div>
+            <div id="cpuInfo" class="info"></div>
         </div>
         <div class="metric-container">
-            <div class="label">Memory Usage</div>
+            <div class="label">Memory</div>
             <div class="progress-bar">
                 <div id="memoryProgress" class="progress"></div>
             </div>
@@ -99,16 +98,15 @@
         function updateCPUMetric(cpu) {
             const progress = document.getElementById('cpuProgress');
             const percentElement = document.getElementById('cpuPercent');
-            const usageElement = document.getElementById('cpuUsage');
             const infoElement = document.getElementById('cpuInfo');
             const dynamicInfoElement = document.getElementById('cpuDynamicInfo');
             
             progress.style.width = `${cpu.usage}%`;
-            percentElement.textContent = `${cpu.usage.toFixed(1)}%`;
-            usageElement.textContent = `${cpu.count} cores`;
+            percentElement.textContent = `${cpu.usage.toFixed(1)}% Usage`;
             infoElement.innerHTML = `
                 Name: ${cpu.name}<br>
-                Frequency: ${cpu.frequency}
+                Frequency: ${cpu.frequency}<br>
+                Cores: ${cpu.count}
             `;
             dynamicInfoElement.innerHTML = `
                 <div class="value-box">Tasks: ${cpu.tasks}</div>
@@ -127,7 +125,7 @@
             const infoElement = document.getElementById('memoryInfo');
             
             progress.style.width = `${memory.percent}%`;
-            percentElement.textContent = `${memory.percent.toFixed(1)}%`;
+            percentElement.textContent = `${memory.percent.toFixed(1)}% Usage`;
             usageElement.textContent = `${memory.used} / ${memory.total}`;
             infoElement.innerHTML = `
                 Total RAM: ${memory.total}<br>
