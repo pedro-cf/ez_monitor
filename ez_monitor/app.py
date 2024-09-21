@@ -15,8 +15,8 @@ import requests
 import logging
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -87,7 +87,7 @@ def get_static_disk_info():
                 'remote': 'remote' in partition.opts
             }
         except Exception as e:
-            print(f"Error getting static disk info for {partition.mountpoint}: {e}")
+            logger.error(f"Error getting static disk info for {partition.mountpoint}: {e}")
     return static_disk_info
 
 def get_disk_info(path='/'):
@@ -106,7 +106,7 @@ def get_disk_info(path='/'):
             'percent': round(percent, 1),
         }
     except Exception as e:
-        print(f"Error getting disk info: {e}")
+        logger.error(f"Error getting disk info: {e}")
         return {
             'total': "N/A", 'used': "N/A", 'free': "N/A", 'percent': 0,
         }
@@ -128,7 +128,7 @@ def get_gpu_info():
         else:
             return {'error': 'No GPU found'}
     except Exception as e:
-        print(f"Error getting GPU info: {e}")
+        logger.error(f"Error getting GPU info: {e}")
         return {'error': str(e)}
 
 # Disk I/O and Network Usage
@@ -204,7 +204,7 @@ def get_static_network_info():
                 'ipv6': next((addr.address for addr in addrs if addr.family == socket.AF_INET6), 'Unknown')
             }
     except Exception as e:
-        print(f"Error getting network info: {e}")
+        logger.error(f"Error getting network info: {e}")
     return interfaces
 
 # Metrics Update
@@ -305,6 +305,12 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
+    
+    # Set up logging based on debug flag
+    log_level = logging.DEBUG if args.debug else logging.WARNING
+    logging.basicConfig(level=log_level, format='%(levelname)s:%(name)s:%(message)s')
+    logger = logging.getLogger(__name__)
+    
     print(f"Starting ez_monitor with the following configuration:")
     print(f"Port: {args.port}")
     print(f"Refresh rate: {args.refresh_rate} seconds")
