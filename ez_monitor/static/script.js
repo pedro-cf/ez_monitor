@@ -121,7 +121,7 @@ function updateChart(chart, value) {
 function initCharts() {
     cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage', true, 100);
     memoryChart = createChart(document.getElementById('memoryChart').getContext('2d'), 'Memory Usage (GB)', false);
-    diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage (GB)', false);
+    diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Space (GB)', false);
     gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU Usage', true, 100);
     diskIOChart = createChart(document.getElementById('diskIOChart').getContext('2d'), 'Disk I/O (MB/s)', false);
     networkChart = createChart(document.getElementById('networkChart').getContext('2d'), 'Network Usage (MB/s)', false);
@@ -152,7 +152,7 @@ function updateCPUMetric(cpu) {
 
     if (cpu.usage > cpuMax) {
         cpuMax = cpu.usage;
-        maxLine.style.left = `${cpuMax}%`;
+        maxLine.style.left = `calc(${cpuMax}% - 2px)`;
         maxLine.style.display = 'block';
     }
     
@@ -182,7 +182,7 @@ function updateMemoryMetric(memory) {
 
     if (memory.percent > memoryMax) {
         memoryMax = memory.percent;
-        maxLine.style.left = `${memoryMax}%`;
+        maxLine.style.left = `calc(${memoryMax}% - 2px)`;
         maxLine.style.display = 'block';
     }
     
@@ -210,6 +210,7 @@ function updateDiskMetric(disk) {
     freeElement.textContent = `Free: ${disk.free}`;
     
     staticInfoElement.innerHTML = `
+        Disk Space<br>
         Remote: ${disk.remote}<br>
         Device: ${disk.device}
     `;
@@ -218,7 +219,7 @@ function updateDiskMetric(disk) {
 
     if (disk.percent > diskMax) {
         diskMax = disk.percent;
-        maxLine.style.left = `${diskMax}%`;
+        maxLine.style.left = `calc(${diskMax}% - 2px)`;
         maxLine.style.display = 'block';
     }
     
@@ -256,7 +257,7 @@ function updateGPUMetric(gpu) {
 
         if (gpu.percent > gpuMax) {
             gpuMax = gpu.percent;
-            maxLine.style.left = `${gpuMax}%`;
+            maxLine.style.left = `calc(${gpuMax}% - 2px)`;
             maxLine.style.display = 'block';
         }
         
@@ -282,14 +283,15 @@ function updateDiskIOMetric(diskIO) {
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Read: ${diskIO.read_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Write: ${diskIO.write_speed.toFixed(2)} MB/s</div>
+        <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
-    infoElement.innerHTML = `Total I/O: ${totalSpeed.toFixed(2)} MB/s`;
+    infoElement.innerHTML = `Disk I/O`;
     
     updateProgressColor(progress, percent);
 
     if (totalSpeed > diskIOMax) {
         diskIOMax = totalSpeed;
-        maxLine.style.left = '100%';
+        maxLine.style.left = 'calc(100% - 2px)';
         maxLine.style.display = 'block';
     }
     
@@ -311,14 +313,15 @@ function updateNetworkMetric(network) {
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Upload: ${network.upload_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Download: ${network.download_speed.toFixed(2)} MB/s</div>
+        <div class="value-box">Total Network: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
-    infoElement.innerHTML = `Total Network: ${totalSpeed.toFixed(2)} MB/s`;
+    infoElement.innerHTML = `Network Usage`;
     
     updateProgressColor(progress, percent);
 
     if (totalSpeed > networkMax) {
         networkMax = totalSpeed;
-        maxLine.style.left = '100%';
+        maxLine.style.left = 'calc(100% - 2px)';
         maxLine.style.display = 'block';
     }
     
