@@ -132,10 +132,9 @@
             
             staticInfoElement.innerHTML = `
                 Type: ${disk.type}<br>
-                Name: ${disk.name}<br>
                 Remote: ${disk.remote}<br>
-                File System: ${disk.filesystem}<br>
-                Mount Point: ${disk.mountpoint}
+                Mount Point: ${disk.mountpoint}<br>
+                Device: ${disk.device}
             `;
             
             updateProgressColor(progress, disk.percent);

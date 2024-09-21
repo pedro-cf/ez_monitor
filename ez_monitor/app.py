@@ -5,6 +5,7 @@ import os
 import cpuinfo
 import shutil
 import GPUtil
+import sys
 
 app = Flask(__name__)
 
@@ -49,31 +50,39 @@ def get_memory_info():
 
 def get_disk_info(path='/'):
     try:
-        # Use shutil for total, used, and free space
         total, used, free = shutil.disk_usage(path)
         
-        # Convert bytes to GB
         total_gb = total / (1024 ** 3)
         used_gb = used / (1024 ** 3)
         free_gb = free / (1024 ** 3)
         
-        # Calculate percentage
         percent = (used / total) * 100
 
-        # Get disk type and other information
         partitions = psutil.disk_partitions()
         partition_info = next((p for p in partitions if p.mountpoint == path), None)
+        
+        # Determine if it's SSD or HDD
+        if sys.platform.startswith('linux'):
+            try:
+                with open('/sys/block/{}/queue/rotational'.format(os.path.basename(partition_info.device))) as f:
+                    is_ssd = f.read().strip() == '0'
+            except:
+                is_ssd = False
+        else:
+            # For non-Linux systems, we can't easily determine SSD/HDD
+            is_ssd = "Unknown"
+        
+        disk_type = "SSD" if is_ssd == True else "HDD" if is_ssd == False else "Unknown"
         
         return {
             'total': f"{total_gb:.2f} GB",
             'used': f"{used_gb:.2f} GB",
             'free': f"{free_gb:.2f} GB",
             'percent': round(percent, 1),
-            'type': partition_info.fstype if partition_info else 'Unknown',
-            'name': os.path.basename(path) if path != '/' else 'C:',
-            'remote': 'Yes' if partition_info and 'remote' in partition_info.opts else 'No',
-            'filesystem': partition_info.fstype if partition_info else 'Unknown',
-            'mountpoint': partition_info.mountpoint if partition_info else 'Unknown'
+            'device': partition_info.device if partition_info else 'Unknown',
+            'mountpoint': partition_info.mountpoint if partition_info else 'Unknown',
+            'type': disk_type,
+            'remote': 'Yes' if partition_info and 'remote' in partition_info.opts else 'No'
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
@@ -82,11 +91,10 @@ def get_disk_info(path='/'):
             'used': "N/A",
             'free': "N/A",
             'percent': 0,
+            'device': "N/A",
+            'mountpoint': "N/A",
             'type': "N/A",
-            'name': "N/A",
-            'remote': "N/A",
-            'filesystem': "N/A",
-            'mountpoint': "N/A"
+            'remote': "N/A"
         }
 
 def get_available_disks():
