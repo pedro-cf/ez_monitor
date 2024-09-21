@@ -13,24 +13,17 @@ import argparse
 
 app = Flask(__name__)
 
-# Global variables to store metrics
+# Global variables
 metrics = {
-    'cpu': {},
-    'memory': {},
-    'disk': {},
-    'gpu': {},
-    'disk_io': {},
-    'network': {}
+    'cpu': {}, 'memory': {}, 'disk': {}, 'gpu': {}, 'disk_io': {}, 'network': {}
 }
 metrics_lock = Lock()
-
-# Global configuration
 config = {
     'refresh_rate': 2,
     'max_data_points': 1800
 }
 
-# Cache CPU info that doesn't change
+# CPU Information
 @lru_cache(maxsize=1)
 def get_static_cpu_info():
     cpu_info = cpuinfo.get_cpu_info()
@@ -39,7 +32,7 @@ def get_static_cpu_info():
         'name': cpu_info['brand_raw'],
     }
 
-def update_cpu_info():
+def get_cpu_info():
     static_info = get_static_cpu_info()
     dynamic_info = {
         'usage': psutil.cpu_percent(interval=0.1),
@@ -47,17 +40,18 @@ def update_cpu_info():
         'tasks': len(psutil.pids()),
         'threads': psutil.cpu_count(logical=True),
         'running': len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING]),
+        'load_average': get_load_average()
     }
-    
-    if hasattr(os, 'getloadavg'):
-        load_avg = os.getloadavg()
-        dynamic_info['load_average'] = f"{load_avg[0]:.2f}, {load_avg[1]:.2f}, {load_avg[2]:.2f}"
-    else:
-        dynamic_info['load_average'] = "N/A (Windows)"
-    
     return {**static_info, **dynamic_info}
 
-def update_memory_info():
+def get_load_average():
+    if hasattr(os, 'getloadavg'):
+        load_avg = os.getloadavg()
+        return f"{load_avg[0]:.2f}, {load_avg[1]:.2f}, {load_avg[2]:.2f}"
+    return "N/A (Windows)"
+
+# Memory Information
+def get_memory_info():
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
     used_gb = mem.used / (1024 ** 3)
@@ -72,7 +66,8 @@ def update_memory_info():
         'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
     }
 
-def update_disk_info(path='/'):
+# Disk Information
+def get_disk_info(path='/'):
     try:
         usage = shutil.disk_usage(path)
         total_gb = usage.total / (1024 ** 3)
@@ -80,27 +75,17 @@ def update_disk_info(path='/'):
         free_gb = usage.free / (1024 ** 3)
         
         percent = (usage.used / usage.total) * 100
-
-        partitions = psutil.disk_partitions()
-        partition_info = next((p for p in partitions if p.mountpoint == path), None)
-        
-        is_ssd = "Unknown"
-        if sys.platform.startswith('linux'):
-            try:
-                with open(f'/sys/block/{os.path.basename(partition_info.device)}/queue/rotational') as f:
-                    is_ssd = "SSD" if f.read().strip() == '0' else "HDD"
-            except:
-                pass
+        partition_info = get_partition_info(path)
         
         return {
             'total': f"{total_gb:.2f} GB",
             'used': f"{used_gb:.2f} GB",
             'free': f"{free_gb:.2f} GB",
             'percent': round(percent, 1),
-            'device': partition_info.device if partition_info else 'Unknown',
-            'mountpoint': partition_info.mountpoint if partition_info else 'Unknown',
-            'type': is_ssd,
-            'remote': 'Yes' if partition_info and 'remote' in partition_info.opts else 'No'
+            'device': partition_info.get('device', 'Unknown'),
+            'mountpoint': partition_info.get('mountpoint', 'Unknown'),
+            'type': get_disk_type(partition_info),
+            'remote': 'Yes' if partition_info.get('remote', False) else 'No'
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
@@ -109,7 +94,26 @@ def update_disk_info(path='/'):
             'device': "N/A", 'mountpoint': "N/A", 'type': "N/A", 'remote': "N/A"
         }
 
-def update_gpu_info():
+def get_partition_info(path):
+    partitions = psutil.disk_partitions()
+    partition = next((p for p in partitions if p.mountpoint == path), None)
+    return {
+        'device': partition.device if partition else 'Unknown',
+        'mountpoint': partition.mountpoint if partition else 'Unknown',
+        'remote': 'remote' in partition.opts if partition else False
+    }
+
+def get_disk_type(partition_info):
+    if sys.platform.startswith('linux'):
+        try:
+            with open(f'/sys/block/{os.path.basename(partition_info["device"])}/queue/rotational') as f:
+                return "SSD" if f.read().strip() == '0' else "HDD"
+        except:
+            pass
+    return "Unknown"
+
+# GPU Information
+def get_gpu_info():
     try:
         gpus = GPUtil.getGPUs()
         if gpus:
@@ -128,7 +132,8 @@ def update_gpu_info():
         print(f"Error getting GPU info: {e}")
         return {'error': str(e)}
 
-def update_disk_io():
+# Disk I/O and Network Usage
+def get_disk_io():
     io_counters = psutil.disk_io_counters()
     return {
         'read_bytes': io_counters.read_bytes,
@@ -137,7 +142,7 @@ def update_disk_io():
         'write_count': io_counters.write_count,
     }
 
-def update_network_usage():
+def get_network_usage():
     net_counters = psutil.net_io_counters()
     return {
         'bytes_sent': net_counters.bytes_sent,
@@ -146,47 +151,27 @@ def update_network_usage():
         'packets_recv': net_counters.packets_recv,
     }
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
-    parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
-    parser.add_argument('-r', '--refresh-rate', type=float, default=2.0, help='Refresh rate in seconds')
-    parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
-    parser.add_argument('--debug', action='store_true', help='Run in debug mode')
-    return parser.parse_args()
-
+# Metrics Update
 def update_metrics():
     global metrics
-    last_disk_io = update_disk_io()
-    last_net_usage = update_network_usage()
+    last_disk_io = get_disk_io()
+    last_net_usage = get_network_usage()
     last_time = time.time()
 
     while True:
         current_time = time.time()
         elapsed = current_time - last_time
 
-        current_disk_io = update_disk_io()
-        current_net_usage = update_network_usage()
+        current_disk_io = get_disk_io()
+        current_net_usage = get_network_usage()
 
-        # Avoid division by zero
-        if elapsed > 0:
-            disk_io_speed = {
-                'read_speed': (current_disk_io['read_bytes'] - last_disk_io['read_bytes']) / elapsed / 1024 / 1024,
-                'write_speed': (current_disk_io['write_bytes'] - last_disk_io['write_bytes']) / elapsed / 1024 / 1024,
-            }
-
-            net_speed = {
-                'upload_speed': (current_net_usage['bytes_sent'] - last_net_usage['bytes_sent']) / elapsed / 1024 / 1024,
-                'download_speed': (current_net_usage['bytes_recv'] - last_net_usage['bytes_recv']) / elapsed / 1024 / 1024,
-            }
-        else:
-            disk_io_speed = {'read_speed': 0, 'write_speed': 0}
-            net_speed = {'upload_speed': 0, 'download_speed': 0}
+        disk_io_speed, net_speed = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed)
 
         new_metrics = {
-            'cpu': update_cpu_info(),
-            'memory': update_memory_info(),
-            'disk': {p.mountpoint: update_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
-            'gpu': update_gpu_info(),
+            'cpu': get_cpu_info(),
+            'memory': get_memory_info(),
+            'disk': {p.mountpoint: get_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
+            'gpu': get_gpu_info(),
             'disk_io': disk_io_speed,
             'network': net_speed,
         }
@@ -197,8 +182,24 @@ def update_metrics():
         last_net_usage = current_net_usage
         last_time = current_time
 
-        time.sleep(config['refresh_rate'])  # Use the configured refresh rate
+        time.sleep(config['refresh_rate'])
 
+def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed):
+    if elapsed > 0:
+        disk_io_speed = {
+            'read_speed': (current_disk_io['read_bytes'] - last_disk_io['read_bytes']) / elapsed / 1024 / 1024,
+            'write_speed': (current_disk_io['write_bytes'] - last_disk_io['write_bytes']) / elapsed / 1024 / 1024,
+        }
+        net_speed = {
+            'upload_speed': (current_net_usage['bytes_sent'] - last_net_usage['bytes_sent']) / elapsed / 1024 / 1024,
+            'download_speed': (current_net_usage['bytes_recv'] - last_net_usage['bytes_recv']) / elapsed / 1024 / 1024,
+        }
+    else:
+        disk_io_speed = {'read_speed': 0, 'write_speed': 0}
+        net_speed = {'upload_speed': 0, 'download_speed': 0}
+    return disk_io_speed, net_speed
+
+# Flask Routes
 @app.route('/')
 def index():
     disks = psutil.disk_partitions()
@@ -211,12 +212,21 @@ def get_metrics():
         response = {
             'cpu': metrics.get('cpu', {}),
             'memory': metrics.get('memory', {}),
-            'disk': metrics.get('disk', {}).get(selected_disk, update_disk_info(selected_disk)),
+            'disk': metrics.get('disk', {}).get(selected_disk, get_disk_info(selected_disk)),
             'gpu': metrics.get('gpu', {}),
             'disk_io': metrics.get('disk_io', {}),
             'network': metrics.get('network', {})
         }
     return jsonify(response)
+
+# Command-line argument parsing
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
+    parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
+    parser.add_argument('-r', '--refresh-rate', type=float, default=2.0, help='Refresh rate in seconds')
+    parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
+    parser.add_argument('--debug', action='store_true', help='Run in debug mode')
+    return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_arguments()
@@ -234,5 +244,5 @@ if __name__ == '__main__':
     metrics_thread = Thread(target=update_metrics, daemon=True)
     metrics_thread.start()
     
-    # Use 0.0.0.0 to make the app accessible from other devices on the network
+    # Run the Flask app
     app.run(debug=args.debug, threaded=True, host='0.0.0.0', port=args.port)
