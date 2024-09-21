@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+}
+.dashboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.metric-container {
+    width: calc(25% - 15px);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.progress-bar {
+    position: relative;
+    width: 100%;
+    height: 30px;
+    background-color: #333;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.progress {
+    height: 100%;
+    width: 0;
+    transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+}
+.label {
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+.info {
+    font-size: 14px;
+    margin-top: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 5px;
+}
+.value-box {
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+.dynamic-info {
+    display: inline-block;
+}
+.max-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: rgba(255, 255, 255, 1);
+    display: none;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+.percentage-axis {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.percentage-label {
+    position: absolute;
+    bottom: -20px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+.disk-selector {
+    margin-left: auto;
+    font-size: 14px;
+}
+select {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 2px 5px;
+    border-radius: 5px;
+    font-size: 14px;
+}

@@ -4,102 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Metrics Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-        }
-        .dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .metric-container {
-            width: calc(33% - 14px); /* Adjusted for 3 columns */
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .progress-bar {
-            position: relative;
-            width: 100%;
-            height: 30px;
-            background-color: #333;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .progress {
-            height: 100%;
-            width: 0;
-            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
-        }
-        .label {
-            margin-bottom: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            height: 30px; /* Set a fixed height for all label areas */
-            display: flex;
-            align-items: center;
-        }
-        .info {
-            font-size: 14px;
-            margin-top: 10px;
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .value-box {
-            display: inline-block;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-right: 10px;
-            margin-bottom: 5px;
-        }
-        .dynamic-info {
-            display: inline-block;
-        }
-        .max-line {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background-color: rgba(255, 255, 255, 1); /* Fully opaque white */
-            display: none;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); /* Increased glow effect */
-        }
-        .percentage-axis {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 1px;
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        .percentage-label {
-            position: absolute;
-            bottom: -20px;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-        .disk-selector {
-            margin-left: auto;
-            font-size: 14px;
-        }
-        select {
-            background-color: #333;
-            color: #fff;
-            border: none;
-            padding: 2px 5px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="dashboard">
@@ -108,9 +13,6 @@
             <div class="progress-bar">
                 <div id="cpuProgress" class="progress"></div>
                 <div id="cpuMaxLine" class="max-line"></div>
-                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
-                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
-                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
             </div>
             <div id="cpuPercent" class="value-box"></div>
             <div id="cpuDynamicInfo" class="dynamic-info"></div>
@@ -121,9 +23,6 @@
             <div class="progress-bar">
                 <div id="memoryProgress" class="progress"></div>
                 <div id="memoryMaxLine" class="max-line"></div>
-                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
-                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
-                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
             </div>
             <div id="memoryPercent" class="value-box"></div>
             <div id="memoryUsage" class="value-box"></div>
@@ -141,37 +40,19 @@
             <div class="progress-bar">
                 <div id="diskProgress" class="progress"></div>
                 <div id="diskMaxLine" class="max-line"></div>
-                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
-                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
-                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
             </div>
             <div id="diskPercent" class="value-box"></div>
             <div id="diskUsage" class="value-box"></div>
             <div id="diskInfo" class="info"></div>
         </div>
         <div class="metric-container">
-            <div class="label">Disk I/O</div>
+            <div class="label">GPU</div>
             <div class="progress-bar">
-                <div id="diskIOProgress" class="progress"></div>
-                <div id="diskIOMaxLine" class="max-line"></div>
-                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
-                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
-                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
+                <div id="gpuProgress" class="progress"></div>
+                <div id="gpuMaxLine" class="max-line"></div>
             </div>
-            <div id="diskIOPercent" class="value-box"></div>
-            <div id="diskIOInfo" class="info"></div>
-        </div>
-        <div class="metric-container">
-            <div class="label">Network Usage</div>
-            <div class="progress-bar">
-                <div id="networkProgress" class="progress"></div>
-                <div id="networkMaxLine" class="max-line"></div>
-                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
-                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
-                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
-            </div>
-            <div id="networkPercent" class="value-box"></div>
-            <div id="networkInfo" class="info"></div>
+            <div id="gpuPercent" class="value-box"></div>
+            <div id="gpuInfo" class="info"></div>
         </div>
     </div>
 
@@ -179,8 +60,7 @@
         let cpuMax = 0;
         let memoryMax = 0;
         let diskMax = 0;
-        let diskIOMax = 0;
-        let networkMax = 0;
+        let gpuMax = 0;
         const diskSelector = document.getElementById('diskSelector');
 
         function updateCPUMetric(cpu) {
@@ -262,57 +142,31 @@
             }
         }
 
-        function updateDiskIOMetric(diskIO) {
-            const progress = document.getElementById('diskIOProgress');
-            const percentElement = document.getElementById('diskIOPercent');
-            const infoElement = document.getElementById('diskIOInfo');
-            const maxLine = document.getElementById('diskIOMaxLine');
+        function updateGPUMetric(gpu) {
+            const progress = document.getElementById('gpuProgress');
+            const percentElement = document.getElementById('gpuPercent');
+            const infoElement = document.getElementById('gpuInfo');
+            const maxLine = document.getElementById('gpuMaxLine');
             
-            if (diskIO && typeof diskIO.percent !== 'undefined') {
-                progress.style.width = `${diskIO.percent}%`;
-                percentElement.textContent = `${diskIO.percent.toFixed(1)}% Usage`;
+            if (gpu && typeof gpu.percent !== 'undefined') {
+                progress.style.width = `${gpu.percent}%`;
+                percentElement.textContent = `${gpu.percent.toFixed(1)}% Usage`;
                 infoElement.innerHTML = `
-                    Read: ${diskIO.read_speed}/s<br>
-                    Write: ${diskIO.write_speed}/s
+                    Name: ${gpu.name}<br>
+                    Memory: ${gpu.memory_used} / ${gpu.memory_total}<br>
+                    Temperature: ${gpu.temperature}°C
                 `;
                 
-                updateProgressColor(progress, diskIO.percent);
+                updateProgressColor(progress, gpu.percent);
 
-                if (diskIO.percent > diskIOMax) {
-                    diskIOMax = diskIO.percent;
-                    maxLine.style.left = `${diskIOMax}%`;
+                if (gpu.percent > gpuMax) {
+                    gpuMax = gpu.percent;
+                    maxLine.style.left = `${gpuMax}%`;
                     maxLine.style.display = 'block';
                 }
             } else {
-                console.error('Invalid or missing diskIO data:', diskIO);
-                infoElement.innerHTML = 'No data available';
-            }
-        }
-
-        function updateNetworkMetric(network) {
-            const progress = document.getElementById('networkProgress');
-            const percentElement = document.getElementById('networkPercent');
-            const infoElement = document.getElementById('networkInfo');
-            const maxLine = document.getElementById('networkMaxLine');
-            
-            if (network && typeof network.percent !== 'undefined') {
-                progress.style.width = `${network.percent}%`;
-                percentElement.textContent = `${network.percent.toFixed(1)}% Usage`;
-                infoElement.innerHTML = `
-                    Sent: ${network.bytes_sent}/s<br>
-                    Received: ${network.bytes_recv}/s
-                `;
-                
-                updateProgressColor(progress, network.percent);
-
-                if (network.percent > networkMax) {
-                    networkMax = network.percent;
-                    maxLine.style.left = `${networkMax}%`;
-                    maxLine.style.display = 'block';
-                }
-            } else {
-                console.error('Invalid or missing network data:', network);
-                infoElement.innerHTML = 'No data available';
+                console.error('Invalid or missing GPU data:', gpu);
+                infoElement.innerHTML = 'No GPU data available';
             }
         }
 
@@ -325,13 +179,10 @@
                     updateCPUMetric(data.cpu);
                     updateMemoryMetric(data.memory);
                     updateDiskMetric(data.disk);
-                    updateDiskIOMetric(data.disk_io);
-                    updateNetworkMetric(data.network);
+                    updateGPUMetric(data.gpu);
                 })
                 .catch(error => {
                     console.error('Error fetching metrics:', error);
-                    document.getElementById('diskIOInfo').innerHTML = 'Error fetching data';
-                    document.getElementById('networkInfo').innerHTML = 'Error fetching data';
                 });
         }
 
