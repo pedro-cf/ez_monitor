@@ -149,12 +149,38 @@
             <div id="diskUsage" class="value-box"></div>
             <div id="diskInfo" class="info"></div>
         </div>
+        <div class="metric-container">
+            <div class="label">Disk I/O</div>
+            <div class="progress-bar">
+                <div id="diskIOProgress" class="progress"></div>
+                <div id="diskIOMaxLine" class="max-line"></div>
+                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
+                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
+                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
+            </div>
+            <div id="diskIOPercent" class="value-box"></div>
+            <div id="diskIOInfo" class="info"></div>
+        </div>
+        <div class="metric-container">
+            <div class="label">Network Usage</div>
+            <div class="progress-bar">
+                <div id="networkProgress" class="progress"></div>
+                <div id="networkMaxLine" class="max-line"></div>
+                <div class="percentage-axis" style="left: 25%"><span class="percentage-label">25%</span></div>
+                <div class="percentage-axis" style="left: 50%"><span class="percentage-label">50%</span></div>
+                <div class="percentage-axis" style="left: 75%"><span class="percentage-label">75%</span></div>
+            </div>
+            <div id="networkPercent" class="value-box"></div>
+            <div id="networkInfo" class="info"></div>
+        </div>
     </div>
 
     <script>
         let cpuMax = 0;
         let memoryMax = 0;
         let diskMax = 0;
+        let diskIOMax = 0;
+        let networkMax = 0;
         const diskSelector = document.getElementById('diskSelector');
 
         function updateCPUMetric(cpu) {
@@ -236,16 +262,77 @@
             }
         }
 
+        function updateDiskIOMetric(diskIO) {
+            const progress = document.getElementById('diskIOProgress');
+            const percentElement = document.getElementById('diskIOPercent');
+            const infoElement = document.getElementById('diskIOInfo');
+            const maxLine = document.getElementById('diskIOMaxLine');
+            
+            if (diskIO && typeof diskIO.percent !== 'undefined') {
+                progress.style.width = `${diskIO.percent}%`;
+                percentElement.textContent = `${diskIO.percent.toFixed(1)}% Usage`;
+                infoElement.innerHTML = `
+                    Read: ${diskIO.read_speed}/s<br>
+                    Write: ${diskIO.write_speed}/s
+                `;
+                
+                updateProgressColor(progress, diskIO.percent);
+
+                if (diskIO.percent > diskIOMax) {
+                    diskIOMax = diskIO.percent;
+                    maxLine.style.left = `${diskIOMax}%`;
+                    maxLine.style.display = 'block';
+                }
+            } else {
+                console.error('Invalid or missing diskIO data:', diskIO);
+                infoElement.innerHTML = 'No data available';
+            }
+        }
+
+        function updateNetworkMetric(network) {
+            const progress = document.getElementById('networkProgress');
+            const percentElement = document.getElementById('networkPercent');
+            const infoElement = document.getElementById('networkInfo');
+            const maxLine = document.getElementById('networkMaxLine');
+            
+            if (network && typeof network.percent !== 'undefined') {
+                progress.style.width = `${network.percent}%`;
+                percentElement.textContent = `${network.percent.toFixed(1)}% Usage`;
+                infoElement.innerHTML = `
+                    Sent: ${network.bytes_sent}/s<br>
+                    Received: ${network.bytes_recv}/s
+                `;
+                
+                updateProgressColor(progress, network.percent);
+
+                if (network.percent > networkMax) {
+                    networkMax = network.percent;
+                    maxLine.style.left = `${networkMax}%`;
+                    maxLine.style.display = 'block';
+                }
+            } else {
+                console.error('Invalid or missing network data:', network);
+                infoElement.innerHTML = 'No data available';
+            }
+        }
+
         function updateMetrics() {
             const selectedDisk = diskSelector.value;
             fetch(`/metrics?disk=${encodeURIComponent(selectedDisk)}`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Received data:", data);  // Keep this line
                     updateCPUMetric(data.cpu);
                     updateMemoryMetric(data.memory);
                     updateDiskMetric(data.disk);
+                    updateDiskIOMetric(data.disk_io);
+                    updateNetworkMetric(data.network);
                 })
-                .catch(error => console.error('Error fetching metrics:', error));
+                .catch(error => {
+                    console.error('Error fetching metrics:', error);
+                    document.getElementById('diskIOInfo').innerHTML = 'Error fetching data';
+                    document.getElementById('networkInfo').innerHTML = 'Error fetching data';
+                });
         }
 
         function updateProgressColor(progressElement, value) {

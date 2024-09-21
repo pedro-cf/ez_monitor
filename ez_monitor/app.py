@@ -58,6 +58,22 @@ def get_available_disks():
     partitions = psutil.disk_partitions(all=False)
     return [p.mountpoint for p in partitions]
 
+def get_disk_io_info():
+    io_counters = psutil.disk_io_counters()
+    return {
+        'read_speed': f"{io_counters.read_bytes / 1024 / 1024:.2f} MB/s",
+        'write_speed': f"{io_counters.write_bytes / 1024 / 1024:.2f} MB/s",
+        'percent': psutil.disk_io_counters().read_bytes / (1024 * 1024) + psutil.disk_io_counters().write_bytes / (1024 * 1024)
+    }
+
+def get_network_info():
+    net_io = psutil.net_io_counters()
+    return {
+        'bytes_sent': f"{net_io.bytes_sent / 1024 / 1024:.2f} MB/s",
+        'bytes_recv': f"{net_io.bytes_recv / 1024 / 1024:.2f} MB/s",
+        'percent': (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)
+    }
+
 @app.route('/')
 def index():
     disks = get_available_disks()
@@ -70,6 +86,8 @@ def metrics():
         'cpu': get_cpu_info(),
         'memory': get_memory_info(),
         'disk': get_disk_info(selected_disk),
+        'disk_io': get_disk_io_info(),
+        'network': get_network_info(),
         'timestamp': int(time.time() * 1000)
     })
 
