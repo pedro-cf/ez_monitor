@@ -291,7 +291,7 @@ def get_metrics():
 def parse_arguments():
     parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
     parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
-    parser.add_argument('-r', '--refresh-rate', type=float, default=2.0, help='Refresh rate in seconds')
+    parser.add_argument('-r', '--refresh-rate', type=float, default=0.5, help='Refresh rate in seconds')
     parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
     parser.add_argument('--debug', action='store_true', help='Run in debug mode')
     return parser.parse_args()
