@@ -1,9 +1,99 @@
-
 let cpuMax = 0;
 let memoryMax = 0;
 let diskMax = 0;
 let gpuMax = 0;
 const diskSelector = document.getElementById('diskSelector');
+
+let cpuChart, memoryChart, diskChart, gpuChart;
+const maxDataPoints = 120; // Show last 60 seconds of data
+
+function createChart(ctx, label) {
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: label,
+                data: [],
+                borderColor: function(context) {
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) {
+                        return null;
+                    }
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(0, 255, 0, 0.5)');
+                    gradient.addColorStop(1, 'rgba(255, 0, 0, 0.5)');
+                    return gradient;
+                },
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { 
+                    display: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        maxTicksLimit: 5,
+                        maxRotation: 0
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { 
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    titleColor: 'rgba(255, 255, 255, 1)',
+                    bodyColor: 'rgba(255, 255, 255, 1)',
+                    displayColors: false
+                }
+            },
+            animation: { duration: 0 }
+        }
+    });
+}
+
+function updateChart(chart, value) {
+    const now = new Date();
+    chart.data.labels.push(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    chart.data.datasets[0].data.push(value);
+
+    if (chart.data.labels.length > maxDataPoints) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+    }
+
+    chart.update('none'); // Use 'none' to disable animations for smoother updates
+}
+
+function initCharts() {
+    cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage');
+    memoryChart = createChart(document.getElementById('memoryChart').getContext('2d'), 'Memory Usage');
+    diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage');
+    gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU Usage');
+}
 
 function updateCPUMetric(cpu) {
     const progress = document.getElementById('cpuProgress');
@@ -33,18 +123,24 @@ function updateCPUMetric(cpu) {
         maxLine.style.left = `${cpuMax}%`;
         maxLine.style.display = 'block';
     }
+    
+    updateChart(cpuChart, cpu.usage);
 }
 
 function updateMemoryMetric(memory) {
     const progress = document.getElementById('memoryProgress');
     const percentElement = document.getElementById('memoryPercent');
-    const usageElement = document.getElementById('memoryUsage');
+    const dynamicInfoElement = document.getElementById('memoryDynamicInfo');
     const infoElement = document.getElementById('memoryInfo');
     const maxLine = document.getElementById('memoryMaxLine');
     
     progress.style.width = `${memory.percent}%`;
     percentElement.textContent = `${memory.percent.toFixed(1)}%`;
-    usageElement.textContent = `${memory.used} / ${memory.total}`;
+    
+    dynamicInfoElement.innerHTML = `
+        <div class="value-box">${memory.used} / ${memory.total}</div>
+    `;
+    
     infoElement.innerHTML = `
         Total RAM: ${memory.total}<br>
         Swap Total: ${memory.swap_total}
@@ -57,6 +153,8 @@ function updateMemoryMetric(memory) {
         maxLine.style.left = `${memoryMax}%`;
         maxLine.style.display = 'block';
     }
+    
+    updateChart(memoryChart, memory.percent);
 }
 
 function updateDiskMetric(disk) {
@@ -84,6 +182,8 @@ function updateDiskMetric(disk) {
         maxLine.style.left = `${diskMax}%`;
         maxLine.style.display = 'block';
     }
+    
+    updateChart(diskChart, disk.percent);
 }
 
 function updateGPUMetric(gpu) {
@@ -114,6 +214,8 @@ function updateGPUMetric(gpu) {
             maxLine.style.left = `${gpuMax}%`;
             maxLine.style.display = 'block';
         }
+        
+        updateChart(gpuChart, gpu.percent);
     } else {
         console.error('Invalid or missing GPU data:', gpu);
         infoElement.innerHTML = 'No GPU data available';
@@ -144,5 +246,8 @@ function updateProgressColor(progressElement, value) {
 // Update metrics when disk selection changes
 diskSelector.addEventListener('change', updateMetrics);
 
-// Update metrics every second
-setInterval(updateMetrics, 1000);
+// Update metrics every 500 milliseconds
+setInterval(updateMetrics, 500);
+
+// Initialize charts when the page loads
+document.addEventListener('DOMContentLoaded', initCharts);

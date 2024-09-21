@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Metrics Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard">
@@ -16,6 +17,9 @@
             </div>
             <div id="cpuDynamicInfo" class="dynamic-info"></div>
             <div id="cpuInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="cpuChart"></canvas>
+            </div>
         </div>
         <div class="metric-container">
             <div class="label">Memory <span id="memoryPercent" class="value-box percentage"></span></div>
@@ -23,8 +27,11 @@
                 <div id="memoryProgress" class="progress"></div>
                 <div id="memoryMaxLine" class="max-line"></div>
             </div>
-            <div id="memoryUsage" class="value-box"></div>
+            <div id="memoryDynamicInfo" class="dynamic-info"></div>
             <div id="memoryInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="memoryChart"></canvas>
+            </div>
         </div>
         <div class="metric-container">
             <div class="label">GPU <span id="gpuPercent" class="value-box percentage"></span></div>
@@ -34,6 +41,9 @@
             </div>
             <div id="gpuDynamicInfo" class="dynamic-info"></div>
             <div id="gpuInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="gpuChart"></canvas>
+            </div>
         </div>
         <div class="metric-container">
             <div class="label">
@@ -53,6 +63,9 @@
                 <div id="diskFree" class="value-box"></div>
             </div>
             <div id="diskStaticInfo" class="info"></div>
+            <div class="chart-container">
+                <canvas id="diskChart"></canvas>
+            </div>
         </div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
