@@ -5,37 +5,34 @@
 ![image](https://github.com/user-attachments/assets/1ded3d71-c139-4f70-977b-1758551a4c5e)
 
 
+## Installation
+
+Since ez_monitor is not yet published on PyPI, you'll need to install it from the source. Follow these steps:
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/pedro-cf/ez_monitor.git
+   ```
+
+2. Change to the ez_monitor directory:
+   ```
+   cd ez_monitor
+   ```
+
+3. Install the package:
+   ```
+   pip install .
+   ```
+
 ## Usage
 
-To use ez_monitor, follow these steps:
-
-1. Clone this repository to your local machine:
+After installation, you can run ez_monitor directly from the command line:
 
 ```
-git clone https://github.com/yourusername/ez_monitor.git
+ez_monitor
 ```
 
-2. Change to the cloned directory:
-
-```
-cd ez_monitor
-```
-
-3. Install the required dependencies:
-
-```
-pip install -r requirements.txt
-```
-
-4. Run the application:
-
-```
-python ez_monitor/app.py
-```
-
-5. Access the dashboard in your web browser:
-
-Open a web browser and navigate to `http://localhost:5000/`. You will see a web page displaying real-time system metrics.
+By default, ez_monitor will start on port 5000. You can access the dashboard by opening a web browser and navigating to `http://localhost:5000/`.
 
 ### Command-line Arguments
 
@@ -48,10 +45,10 @@ You can customize the behavior of ez_monitor using the following command-line ar
 
 Example:
 ```
-python ez_monitor/app.py -p 8080 -r 1.5 -m 3600
+ez_monitor -p 8080 -r 1.5 -m 3600 --debug
 ```
 
-This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, and keep up to 3600 data points.
+This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, keep up to 3600 data points, and run in debug mode.
 
 ## Features
 
@@ -64,13 +61,7 @@ This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, and k
 
 ## Requirements
 
-ez_monitor requires the following:
-
-* Python 3.7+
-* Flask
-* psutil
-* py-cpuinfo
-* GPUtil
+ez_monitor requires Python 3.7 or higher. All other dependencies will be automatically installed when you install ez_monitor using pip.
 
 ## License
 
