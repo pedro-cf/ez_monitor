@@ -12,6 +12,11 @@ from threading import Thread, Lock
 import argparse
 import socket
 import requests
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -136,13 +141,37 @@ def get_gpu_info():
 
 # Disk I/O and Network Usage
 def get_disk_io():
-    io_counters = psutil.disk_io_counters()
-    return {
-        'read_bytes': io_counters.read_bytes,
-        'write_bytes': io_counters.write_bytes,
-        'read_count': io_counters.read_count,
-        'write_count': io_counters.write_count,
-    }
+    try:
+        if platform.system() == 'Windows':
+            io_counters = psutil.disk_io_counters()
+            logger.debug(f"Windows disk I/O: {io_counters}")
+            return {
+                'read_bytes': io_counters.read_bytes,
+                'write_bytes': io_counters.write_bytes,
+                'read_count': io_counters.read_count,
+                'write_count': io_counters.write_count,
+            }
+        else:  # Linux and other Unix-like systems
+            io_counters = psutil.disk_io_counters(perdisk=True)
+            logger.debug(f"Linux disk I/O (per disk): {io_counters}")
+            total_read_bytes = sum(disk.read_bytes for disk in io_counters.values())
+            total_write_bytes = sum(disk.write_bytes for disk in io_counters.values())
+            total_read_count = sum(disk.read_count for disk in io_counters.values())
+            total_write_count = sum(disk.write_count for disk in io_counters.values())
+            return {
+                'read_bytes': total_read_bytes,
+                'write_bytes': total_write_bytes,
+                'read_count': total_read_count,
+                'write_count': total_write_count,
+            }
+    except Exception as e:
+        logger.error(f"Error getting disk I/O info: {e}")
+        return {
+            'read_bytes': 0,
+            'write_bytes': 0,
+            'read_count': 0,
+            'write_count': 0,
+        }
 
 def get_network_usage():
     net_counters = psutil.net_io_counters()
@@ -187,7 +216,7 @@ def update_metrics():
     last_net_usage = get_network_usage()
     last_time = time.time()
 
-    static_network_info = get_static_network_info()  # Add this line
+    static_network_info = get_static_network_info()
 
     while True:
         current_time = time.time()
@@ -198,13 +227,16 @@ def update_metrics():
 
         disk_io_speed, net_speed = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed)
 
+        logger.debug(f"Current disk I/O: {current_disk_io}")
+        logger.debug(f"Calculated disk I/O speed: {disk_io_speed}")
+
         new_metrics = {
             'cpu': get_cpu_info(),
             'memory': get_memory_info(),
             'disk': {p.mountpoint: get_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
             'gpu': get_gpu_info(),
             'disk_io': disk_io_speed,
-            'network': {**net_speed, 'static_info': static_network_info},  # Modify this line
+            'network': {**net_speed, 'static_info': static_network_info},
         }
         with metrics_lock:
             metrics.update(new_metrics)
@@ -218,16 +250,20 @@ def update_metrics():
 def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed):
     if elapsed > 0:
         disk_io_speed = {
-            'read_speed': (current_disk_io['read_bytes'] - last_disk_io['read_bytes']) / elapsed / 1024 / 1024,
-            'write_speed': (current_disk_io['write_bytes'] - last_disk_io['write_bytes']) / elapsed / 1024 / 1024,
+            'read_speed': max(0, (current_disk_io['read_bytes'] - last_disk_io['read_bytes'])) / elapsed / 1024 / 1024,
+            'write_speed': max(0, (current_disk_io['write_bytes'] - last_disk_io['write_bytes'])) / elapsed / 1024 / 1024,
         }
         net_speed = {
-            'upload_speed': (current_net_usage['bytes_sent'] - last_net_usage['bytes_sent']) / elapsed / 1024 / 1024,
-            'download_speed': (current_net_usage['bytes_recv'] - last_net_usage['bytes_recv']) / elapsed / 1024 / 1024,
+            'upload_speed': max(0, (current_net_usage['bytes_sent'] - last_net_usage['bytes_sent'])) / elapsed / 1024 / 1024,
+            'download_speed': max(0, (current_net_usage['bytes_recv'] - last_net_usage['bytes_recv'])) / elapsed / 1024 / 1024,
         }
     else:
         disk_io_speed = {'read_speed': 0, 'write_speed': 0}
         net_speed = {'upload_speed': 0, 'download_speed': 0}
+    
+    logger.debug(f"Calculated disk I/O speeds: {disk_io_speed}")
+    logger.debug(f"Calculated network speeds: {net_speed}")
+    
     return disk_io_speed, net_speed
 
 # Flask Routes
@@ -246,8 +282,9 @@ def get_metrics():
             'disk': metrics.get('disk', {}).get(selected_disk, get_disk_info(selected_disk)),
             'gpu': metrics.get('gpu', {}),
             'disk_io': metrics.get('disk_io', {}),
-            'network': metrics.get('network', {})  # This now includes static_info
+            'network': metrics.get('network', {})
         }
+    logger.debug(f"Metrics response: {response}")
     return jsonify(response)
 
 # Command-line argument parsing
