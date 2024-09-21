@@ -35,13 +35,17 @@ body {
     margin-bottom: 5px;
     font-size: 20px;
     font-weight: bold;
-    height: 30px;
+    height: 36px;
     display: flex;
     align-items: center;
 }
 .percentage {
     margin-left: 10px;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
 }
 .info {
     font-size: 12px;
@@ -57,6 +61,11 @@ body {
     border-radius: 3px;
     margin-right: 5px;
     font-size: 12px;
+}
+.value-box.percentage {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-size: 20px;
+    padding: 2px 8px;
 }
 .dynamic-info {
     display: flex;
