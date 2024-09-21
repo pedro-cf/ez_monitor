@@ -277,7 +277,13 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
 @app.route('/')
 def index():
     disks = psutil.disk_partitions()
-    return render_template('index.html', disks=[p.mountpoint for p in disks])
+    hostname = socket.gethostname()
+    try:
+        ip_address = socket.gethostbyname(hostname)
+    except:
+        ip_address = "Unable to retrieve"
+    
+    return render_template('index.html', disks=[p.mountpoint for p in disks], hostname=hostname, ip_address=ip_address)
 
 @app.route('/metrics')
 def get_metrics():
