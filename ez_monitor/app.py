@@ -74,6 +74,22 @@ def get_memory_info():
     }
 
 # Disk Information
+def get_static_disk_info():
+    partitions = psutil.disk_partitions()
+    static_disk_info = {}
+    for partition in partitions:
+        try:
+            static_disk_info[partition.mountpoint] = {
+                'device': partition.device,
+                'mountpoint': partition.mountpoint,
+                'fstype': partition.fstype,
+                'opts': partition.opts,
+                'remote': 'remote' in partition.opts
+            }
+        except Exception as e:
+            print(f"Error getting static disk info for {partition.mountpoint}: {e}")
+    return static_disk_info
+
 def get_disk_info(path='/'):
     try:
         usage = shutil.disk_usage(path)
@@ -82,45 +98,18 @@ def get_disk_info(path='/'):
         free_gb = usage.free / (1024 ** 3)
         
         percent = (usage.used / usage.total) * 100
-        partition_info = get_partition_info(path)
         
         return {
             'total': f"{total_gb:.2f} GB",
             'used': f"{used_gb:.2f} GB",
             'free': f"{free_gb:.2f} GB",
             'percent': round(percent, 1),
-            'device': partition_info.get('device', 'Unknown'),
-            'mountpoint': partition_info.get('mountpoint', 'Unknown'),
-            'type': get_disk_type(partition_info),
-            'remote': 'Yes' if partition_info.get('remote', False) else 'No',
-            'filesystem': partition_info.get('fstype', 'Unknown')  # Add this line
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
         return {
             'total': "N/A", 'used': "N/A", 'free': "N/A", 'percent': 0,
-            'device': "N/A", 'mountpoint': "N/A", 'type': "N/A", 'remote': "N/A",
-            'filesystem': "N/A"  # Add this line
         }
-
-def get_partition_info(path):
-    partitions = psutil.disk_partitions()
-    partition = next((p for p in partitions if p.mountpoint == path), None)
-    return {
-        'device': partition.device if partition else 'Unknown',
-        'mountpoint': partition.mountpoint if partition else 'Unknown',
-        'remote': 'remote' in partition.opts if partition else False,
-        'fstype': partition.fstype if partition else 'Unknown'  # Add this line
-    }
-
-def get_disk_type(partition_info):
-    if sys.platform.startswith('linux'):
-        try:
-            with open(f'/sys/block/{os.path.basename(partition_info["device"])}/queue/rotational') as f:
-                return "SSD" if f.read().strip() == '0' else "HDD"
-        except:
-            pass
-    return "Unknown"
 
 # GPU Information
 def get_gpu_info():
@@ -225,7 +214,10 @@ def update_metrics():
     last_net_usage = get_network_usage()
     last_time = time.time()
 
+    # Calculate static information only once
     static_network_info = get_static_network_info()
+    static_disk_info = get_static_disk_info()
+    static_cpu_info = get_static_cpu_info()
 
     while True:
         current_time = time.time()
@@ -243,9 +235,12 @@ def update_metrics():
         logger.debug(f"Calculated disk I/O speed: {disk_io_speed}")
 
         new_metrics = {
-            'cpu': get_cpu_info(),
+            'cpu': {**static_cpu_info, **get_cpu_info()},
             'memory': get_memory_info(),
-            'disk': {p.mountpoint: get_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
+            'disk': {
+                mountpoint: {**static_disk_info.get(mountpoint, {}), **get_disk_info(mountpoint)}
+                for mountpoint in static_disk_info
+            },
             'gpu': get_gpu_info(),
             'disk_io': disk_io_speed,
             'network': {**net_speed, 'static_info': static_network_info},
@@ -324,5 +319,5 @@ if __name__ == '__main__':
     metrics_thread = Thread(target=update_metrics, daemon=True)
     metrics_thread.start()
     
-    # Run the Flask app
-    app.run(debug=args.debug, threaded=True, host='0.0.0.0', port=args.port)
+    # Run the Flask app with auto-reload when in debug mode
+    app.run(debug=args.debug, use_reloader=args.debug, threaded=True, host='0.0.0.0', port=args.port)
