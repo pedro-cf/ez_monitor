@@ -42,7 +42,7 @@ Open a web browser and navigate to `http://localhost:5000/`. You will see a web 
 You can customize the behavior of ez_monitor using the following command-line arguments:
 
 - `-p`, `--port`: Specify the port to run the server on (default: 5000)
-- `-r`, `--refresh-rate`: Set the refresh rate in seconds (default: 2.0)
+- `-r`, `--refresh-rate`: Set the refresh rate in seconds (default: 0.5)
 - `-m`, `--max-data-points`: Set the maximum number of data points to keep (default: 1800)
 - `--debug`: Run the application in debug mode
 
