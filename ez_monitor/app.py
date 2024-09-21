@@ -6,40 +6,49 @@ import cpuinfo
 import shutil
 import GPUtil
 import sys
+from functools import lru_cache
+from threading import Thread, Lock
 
 app = Flask(__name__)
 
-def get_cpu_info():
-    cpu_freq = psutil.cpu_freq()
+# Global variables to store metrics
+metrics = {}
+metrics_lock = Lock()
+
+# Cache CPU info that doesn't change
+@lru_cache(maxsize=1)
+def get_static_cpu_info():
     cpu_info = cpuinfo.get_cpu_info()
+    return {
+        'count': psutil.cpu_count(),
+        'name': cpu_info['brand_raw'],
+    }
+
+def update_cpu_info():
+    static_info = get_static_cpu_info()
+    dynamic_info = {
+        'usage': psutil.cpu_percent(interval=0.1),
+        'frequency': f"{psutil.cpu_freq().current:.0f} MHz",
+        'tasks': len(psutil.pids()),
+        'threads': psutil.cpu_count(logical=True),
+        'running': len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING]),
+    }
     
     if hasattr(os, 'getloadavg'):
         load_avg = os.getloadavg()
-        load_avg_str = f"{load_avg[0]:.2f}, {load_avg[1]:.2f}, {load_avg[2]:.2f}"
+        dynamic_info['load_average'] = f"{load_avg[0]:.2f}, {load_avg[1]:.2f}, {load_avg[2]:.2f}"
     else:
-        load_avg_str = "N/A (Windows)"
+        dynamic_info['load_average'] = "N/A (Windows)"
+    
+    return {**static_info, **dynamic_info}
 
-    return {
-        'usage': psutil.cpu_percent(),
-        'count': psutil.cpu_count(),
-        'name': cpu_info['brand_raw'],
-        'frequency': f"{cpu_freq.current:.0f} MHz",
-        'tasks': len(psutil.pids()),
-        'threads': sum(p.num_threads() for p in psutil.process_iter()),
-        'running': len([p for p in psutil.process_iter() if p.status() == psutil.STATUS_RUNNING]),
-        'load_average': load_avg_str
-    }
-
-def get_memory_info():
+def update_memory_info():
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
     used_gb = mem.used / (1024 ** 3)
     total_gb = mem.total / (1024 ** 3)
     
-    if used_gb < 1:
-        used_str = f"{used_gb * 1024:.2f} MB"
-    else:
-        used_str = f"{used_gb:.2f} GB"
+    used_str = f"{used_gb * 1024:.2f} MB" if used_gb < 1 else f"{used_gb:.2f} GB"
     
     return {
         'total': f"{total_gb:.2f} GB",
@@ -48,31 +57,25 @@ def get_memory_info():
         'swap_total': f"{swap.total / (1024 ** 3):.2f} GB",
     }
 
-def get_disk_info(path='/'):
+def update_disk_info(path='/'):
     try:
-        total, used, free = shutil.disk_usage(path)
+        usage = shutil.disk_usage(path)
+        total_gb = usage.total / (1024 ** 3)
+        used_gb = usage.used / (1024 ** 3)
+        free_gb = usage.free / (1024 ** 3)
         
-        total_gb = total / (1024 ** 3)
-        used_gb = used / (1024 ** 3)
-        free_gb = free / (1024 ** 3)
-        
-        percent = (used / total) * 100
+        percent = (usage.used / usage.total) * 100
 
         partitions = psutil.disk_partitions()
         partition_info = next((p for p in partitions if p.mountpoint == path), None)
         
-        # Determine if it's SSD or HDD
+        is_ssd = "Unknown"
         if sys.platform.startswith('linux'):
             try:
-                with open('/sys/block/{}/queue/rotational'.format(os.path.basename(partition_info.device))) as f:
-                    is_ssd = f.read().strip() == '0'
+                with open(f'/sys/block/{os.path.basename(partition_info.device)}/queue/rotational') as f:
+                    is_ssd = "SSD" if f.read().strip() == '0' else "HDD"
             except:
-                is_ssd = False
-        else:
-            # For non-Linux systems, we can't easily determine SSD/HDD
-            is_ssd = "Unknown"
-        
-        disk_type = "SSD" if is_ssd == True else "HDD" if is_ssd == False else "Unknown"
+                pass
         
         return {
             'total': f"{total_gb:.2f} GB",
@@ -81,27 +84,17 @@ def get_disk_info(path='/'):
             'percent': round(percent, 1),
             'device': partition_info.device if partition_info else 'Unknown',
             'mountpoint': partition_info.mountpoint if partition_info else 'Unknown',
-            'type': disk_type,
+            'type': is_ssd,
             'remote': 'Yes' if partition_info and 'remote' in partition_info.opts else 'No'
         }
     except Exception as e:
         print(f"Error getting disk info: {e}")
         return {
-            'total': "N/A",
-            'used': "N/A",
-            'free': "N/A",
-            'percent': 0,
-            'device': "N/A",
-            'mountpoint': "N/A",
-            'type': "N/A",
-            'remote': "N/A"
+            'total': "N/A", 'used': "N/A", 'free': "N/A", 'percent': 0,
+            'device': "N/A", 'mountpoint': "N/A", 'type': "N/A", 'remote': "N/A"
         }
 
-def get_available_disks():
-    partitions = psutil.disk_partitions(all=False)
-    return [p.mountpoint for p in partitions]
-
-def get_gpu_info():
+def update_gpu_info():
     try:
         gpus = GPUtil.getGPUs()
         if gpus:
@@ -121,20 +114,39 @@ def get_gpu_info():
         print(f"Error getting GPU info: {e}")
         return None
 
+def update_metrics():
+    global metrics
+    while True:
+        new_metrics = {
+            'cpu': update_cpu_info(),
+            'memory': update_memory_info(),
+            'disk': {p.mountpoint: update_disk_info(p.mountpoint) for p in psutil.disk_partitions()},
+            'gpu': update_gpu_info()
+        }
+        with metrics_lock:
+            metrics = new_metrics
+        time.sleep(0.5)  # Update every 500ms
+
 @app.route('/')
 def index():
-    disks = get_available_disks()
-    return render_template('index.html', disks=disks)
+    disks = psutil.disk_partitions()
+    return render_template('index.html', disks=[p.mountpoint for p in disks])
 
 @app.route('/metrics')
-def metrics():
+def get_metrics():
     selected_disk = request.args.get('disk', '/')
-    return jsonify({
-        'cpu': get_cpu_info(),
-        'memory': get_memory_info(),
-        'disk': get_disk_info(selected_disk),
-        'gpu': get_gpu_info()
-    })
+    with metrics_lock:
+        response = {
+            'cpu': metrics['cpu'],
+            'memory': metrics['memory'],
+            'disk': metrics['disk'].get(selected_disk, update_disk_info(selected_disk)),
+            'gpu': metrics['gpu']
+        }
+    return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Start the background metrics update thread
+    metrics_thread = Thread(target=update_metrics, daemon=True)
+    metrics_thread.start()
+    
+    app.run(debug=True, threaded=True)
