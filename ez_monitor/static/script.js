@@ -210,7 +210,6 @@ function updateDiskMetric(disk) {
     freeElement.textContent = `Free: ${disk.free}`;
     
     staticInfoElement.innerHTML = `
-        Disk Space<br>
         Remote: ${disk.remote}<br>
         Device: ${disk.device}
     `;
@@ -285,7 +284,8 @@ function updateDiskIOMetric(diskIO) {
         <div class="value-box">Write: ${diskIO.write_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
-    infoElement.innerHTML = `Disk I/O`;
+    infoElement.innerHTML = `
+    `;
     
     updateProgressColor(progress, percent);
 
@@ -315,7 +315,8 @@ function updateNetworkMetric(network) {
         <div class="value-box">Download: ${network.download_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Total Network: ${totalSpeed.toFixed(2)} MB/s</div>
     `;
-    infoElement.innerHTML = `Network Usage`;
+    infoElement.innerHTML = `
+    `;
     
     updateProgressColor(progress, percent);
 
