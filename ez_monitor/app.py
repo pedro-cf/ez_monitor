@@ -9,6 +9,7 @@ import sys
 import platform
 from functools import lru_cache
 from threading import Thread, Lock
+import argparse
 
 app = Flask(__name__)
 
@@ -22,6 +23,12 @@ metrics = {
     'network': {}
 }
 metrics_lock = Lock()
+
+# Global configuration
+config = {
+    'refresh_rate': 2,
+    'max_data_points': 1800
+}
 
 # Cache CPU info that doesn't change
 @lru_cache(maxsize=1)
@@ -139,6 +146,14 @@ def update_network_usage():
         'packets_recv': net_counters.packets_recv,
     }
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
+    parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
+    parser.add_argument('-r', '--refresh-rate', type=float, default=2.0, help='Refresh rate in seconds')
+    parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
+    parser.add_argument('--debug', action='store_true', help='Run in debug mode')
+    return parser.parse_args()
+
 def update_metrics():
     global metrics
     last_disk_io = update_disk_io()
@@ -182,7 +197,7 @@ def update_metrics():
         last_net_usage = current_net_usage
         last_time = current_time
 
-        time.sleep(2)  # Update every 2 seconds
+        time.sleep(config['refresh_rate'])  # Use the configured refresh rate
 
 @app.route('/')
 def index():
@@ -204,9 +219,20 @@ def get_metrics():
     return jsonify(response)
 
 if __name__ == '__main__':
+    args = parse_arguments()
+    print(f"Starting ez_monitor with the following configuration:")
+    print(f"Port: {args.port}")
+    print(f"Refresh rate: {args.refresh_rate} seconds")
+    print(f"Max data points: {args.max_data_points}")
+    print(f"Debug mode: {'On' if args.debug else 'Off'}")
+    
+    # Update global configuration
+    config['refresh_rate'] = args.refresh_rate
+    config['max_data_points'] = args.max_data_points
+    
     # Start the background metrics update thread
     metrics_thread = Thread(target=update_metrics, daemon=True)
     metrics_thread.start()
     
     # Use 0.0.0.0 to make the app accessible from other devices on the network
-    app.run(debug=True, threaded=True, host='0.0.0.0')
+    app.run(debug=args.debug, threaded=True, host='0.0.0.0', port=args.port)
