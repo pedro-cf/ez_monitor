@@ -522,7 +522,14 @@ function initializeSettings() {
         showStaticInfo: true,
         showCharts: true,
         displayOrder: [
-            'CPU', 'Memory', 'GPU', 'Disk Space', 'Disk I/O', 'Network', 'Top Processes', 'Docker Containers'
+            { name: 'CPU', visible: true },
+            { name: 'Memory', visible: true },
+            { name: 'GPU', visible: true },
+            { name: 'Disk', visible: true },
+            { name: 'Disk', visible: true },
+            { name: 'Network', visible: true },
+            { name: 'Top', visible: true },
+            { name: 'Docker', visible: true }
         ]
     };
 
@@ -713,7 +720,27 @@ function initializeSettings() {
     resetDefaultsButton.onclick = function() {
         applySettings(defaultSettings);
         saveSettings();
-        createReorderElements(); // Recreate reorder elements with default order
+        
+        // Update the dashboard layout
+        const dashboard = document.querySelector('.dashboard');
+        defaultSettings.displayOrder.forEach((item) => {
+            const container = Array.from(dashboard.children).find(c => 
+                c.querySelector('.label').textContent.trim().startsWith(item.name)
+            );
+            if (container) {
+                dashboard.appendChild(container);
+                container.style.display = item.visible ? 'flex' : 'none';
+            }
+        });
+
+        // Recreate reorder elements to reflect the new order
+        createReorderElements();
+
+        // Update UI elements to reflect default settings
+        columnCountValue.textContent = defaultSettings.columnCount;
+        scaleValue.textContent = defaultSettings.scale + '%';
+        document.querySelector('.scale-container').style.transform = `scale(${defaultSettings.scale / 100})`;
+        document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${defaultSettings.columnCount}, 1fr)`;
     }
 
     createReorderElements();
