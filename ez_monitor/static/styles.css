@@ -522,34 +522,3 @@ input[type="range"] {
 .status-unknown {
     background-color: #9E9E9E;
 }
-
-/* Add these styles at the end of the file */
-.reorder-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-    padding: 5px;
-    background-color: #333;
-    border-radius: 3px;
-    cursor: move;
-}
-
-.reorder-item input[type="checkbox"] {
-    margin-right: 10px;
-}
-
-.reorder-item label {
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    cursor: pointer;
-}
-
-.drag-handle {
-    margin-right: 10px;
-    cursor: move;
-}
-
-.reorder-item.over {
-    border: 2px dashed #fff;
-}
