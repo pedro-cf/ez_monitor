@@ -3,13 +3,26 @@ body {
     background-color: #000;
     color: #fff;
     margin: 0;
-    padding: 20px;
+    padding-right: 40px;
     font-size: 14px;
     line-height: 1.5;
-    min-width: 1000px; /* Adjusted for 3 columns */
-    padding-top: 0;
-    overflow-x: hidden; /* Prevent horizontal scrollbar */
+    overflow: hidden; /* Hide both horizontal and vertical scrollbars */
 }
+
+.scale-container {
+    transform-origin: top left;
+    transition: transform 0.3s ease;
+    height: 100vh; /* Set the container to full viewport height */
+    overflow-y: scroll; /* Enable vertical scrolling for the container */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer and Edge */
+    padding: 20px; /* Add padding here instead of on the body */
+}
+
+.scale-container::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari) */
+}
+
 .dashboard {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* Default to 3 columns */
