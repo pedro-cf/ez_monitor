@@ -743,6 +743,55 @@ function initializeSettings() {
         document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${defaultSettings.columnCount}, 1fr)`;
     }
 
+    // Add event listeners for settings controls
+    columnCountSlider.addEventListener('input', function() {
+        columnCountValue.textContent = this.value;
+        document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${this.value}, 1fr)`;
+        saveSettings();
+    });
+
+    scaleSlider.addEventListener('input', function() {
+        const scale = this.value / 100;
+        scaleValue.textContent = this.value + '%';
+        document.querySelector('.scale-container').style.transform = `scale(${scale})`;
+        saveSettings();
+    });
+
+    showHeaderCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.header').forEach(header => {
+            header.style.display = this.checked ? 'block' : 'none';
+        });
+        saveSettings();
+    });
+
+    showGaugesCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.gauge').forEach(gauge => {
+            gauge.style.display = this.checked ? 'block' : 'none';
+        });
+        saveSettings();
+    });
+
+    showDynamicInfoCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.dynamic-info').forEach(info => {
+            info.style.display = this.checked ? 'block' : 'none';
+        });
+        saveSettings();
+    });
+
+    showStaticInfoCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.static-info').forEach(info => {
+            info.style.display = this.checked ? 'block' : 'none';
+        });
+        saveSettings();
+    });
+
+    showChartsCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.chart-container').forEach(chart => {
+            chart.style.display = this.checked ? 'block' : 'none';
+        });
+        saveSettings();
+    });
+
     createReorderElements();
     loadSettings(); // Load saved settings
 }
