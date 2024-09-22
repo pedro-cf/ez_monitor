@@ -507,7 +507,6 @@ function initializeSettings() {
     const showDynamicInfoCheckbox = document.getElementById('showDynamicInfo');
     const showStaticInfoCheckbox = document.getElementById('showStaticInfo');
     const showChartsCheckbox = document.getElementById('showCharts');
-    const containerToggles = document.getElementById('containerToggles');
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
     const resetDefaultsButton = document.getElementById('resetDefaults');
@@ -521,7 +520,16 @@ function initializeSettings() {
         showDynamicInfo: true,
         showStaticInfo: true,
         showCharts: true,
-        containerToggles: {}
+        displayOrder: [
+            { name: 'CPU', visible: true },
+            { name: 'Memory', visible: true },
+            { name: 'GPU', visible: true },
+            { name: 'Disk', visible: true },
+            { name: 'Disk', visible: true },
+            { name: 'Network', visible: true },
+            { name: 'Top', visible: true },
+            { name: 'Docker', visible: true }
+        ]
     };
 
     // Function to apply settings
@@ -547,21 +555,42 @@ function initializeSettings() {
         showChartsCheckbox.checked = settings.showCharts;
         showChartsCheckbox.dispatchEvent(new Event('change'));
 
-        // Apply container toggle states
-        document.querySelectorAll('#containerToggles input[type="checkbox"]').forEach(checkbox => {
-            const id = checkbox.id;
-            checkbox.checked = settings.containerToggles[id] !== undefined ? settings.containerToggles[id] : true;
-            checkbox.dispatchEvent(new Event('change'));
+        // Apply display order and visibility
+        const dashboard = document.querySelector('.dashboard');
+        settings.displayOrder.forEach((item) => {
+            const container = Array.from(dashboard.children).find(c => 
+                c.querySelector('.label').textContent.trim().startsWith(item.name)
+            );
+            if (container) {
+                dashboard.appendChild(container);
+                container.style.display = item.visible ? 'flex' : 'none';
+            }
         });
+
+        createReorderElements();
     }
 
-    // Reset to defaults
-    resetDefaultsButton.onclick = function() {
-        applySettings(defaultSettings);
-        saveSettings();
+    // Function to save settings
+    function saveSettings() {
+        const settings = {
+            columnCount: columnCountSlider.value,
+            scale: scaleSlider.value,
+            showHeader: showHeaderCheckbox.checked,
+            showGauges: showGaugesCheckbox.checked,
+            showDynamicInfo: showDynamicInfoCheckbox.checked,
+            showStaticInfo: showStaticInfoCheckbox.checked,
+            showCharts: showChartsCheckbox.checked,
+            displayOrder: Array.from(document.querySelectorAll('.metric-container'))
+                .map(container => ({
+                    name: container.querySelector('.label').textContent.trim().split(' ')[0],
+                    visible: container.style.display !== 'none'
+                }))
+        };
+
+        localStorage.setItem('ezMonitorSettings', JSON.stringify(settings));
     }
 
-    // Modify loadSettings function
+    // Function to load settings
     function loadSettings() {
         const savedSettings = localStorage.getItem('ezMonitorSettings');
         if (savedSettings) {
@@ -595,73 +624,16 @@ function initializeSettings() {
         }
     }
 
-    // Function to save settings
-    function saveSettings() {
-        const settings = {
-            columnCount: columnCountSlider.value,
-            scale: scaleSlider.value,
-            showHeader: showHeaderCheckbox.checked,
-            showGauges: showGaugesCheckbox.checked,
-            showDynamicInfo: showDynamicInfoCheckbox.checked,
-            showStaticInfo: showStaticInfoCheckbox.checked,
-            showCharts: showChartsCheckbox.checked,
-            containerToggles: {}
-        };
-
-        // Save container toggle states
-        document.querySelectorAll('#containerToggles input[type="checkbox"]').forEach(checkbox => {
-            settings.containerToggles[checkbox.id] = checkbox.checked;
-        });
-
-        localStorage.setItem('ezMonitorSettings', JSON.stringify(settings));
-    }
-
-    // Modify existing event listeners to save settings after change
-    columnCountSlider.oninput = function() {
-        const columnCount = this.value;
-        columnCountValue.textContent = columnCount;
-        document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
-        saveSettings();
-    }
-
-    showHeaderCheckbox.onchange = function() {
-        document.querySelector('.dashboard-header').style.display = this.checked ? 'block' : 'none';
-        saveSettings();
-    }
-
-    showGaugesCheckbox.onchange = function() {
-        document.querySelectorAll('.progress-bar').forEach(el => {
-            el.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    }
-
-    showDynamicInfoCheckbox.onchange = function() {
-        document.querySelectorAll('.disk-info-row').forEach(el => {
-            el.style.display = this.checked ? 'flex' : 'none';
-        });
-        saveSettings();
-    }
-
-    showStaticInfoCheckbox.onchange = function() {
-        document.querySelectorAll('.info').forEach(el => {
-            el.style.display = this.checked ? 'flex' : 'none';
-        });
-        saveSettings();
-    }
-
-    showChartsCheckbox.onchange = function() {
-        document.querySelectorAll('.chart-container').forEach(el => {
-            el.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    }
-
     // Modify createContainerToggles function
     function createContainerToggles() {
         const containers = document.querySelectorAll('.metric-container');
-        containers.forEach((container, index) => {
-            const label = container.querySelector('.label').textContent.trim().split(' ')[0];
+        reorderContainer.innerHTML = '';
+        containers.forEach((container) => {
+            const label = container.querySelector('.label').childNodes[0].textContent.trim();
+            const reorderItem = document.createElement('div');
+            reorderItem.className = 'reorder-item';
+            reorderItem.draggable = true;
+            
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `toggle-${label.toLowerCase()}`;
@@ -692,18 +664,83 @@ function initializeSettings() {
         });
     }
 
-    // Modify scale functionality
-    scaleSlider.oninput = function() {
-        const scale = this.value / 100;
-        scaleValue.textContent = `${this.value}%`;
-        document.querySelector('.scale-container').style.transform = `scale(${scale})`;
-        document.querySelector('.scale-container').style.transformOrigin = 'top left';
-        document.querySelector('.scale-container').style.width = `${100 / scale}%`;
-        document.querySelector('.scale-container').style.height = `${100 / scale}vh`;
-        saveSettings();
+    // Drag and drop functions
+    let draggedItem = null;
+
+    function dragStart() {
+        draggedItem = this;
+        setTimeout(() => this.style.opacity = '0.5', 0);
     }
 
-    createContainerToggles();
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    function dragEnter(e) {
+        e.preventDefault();
+        this.classList.add('over');
+    }
+
+    function dragLeave() {
+        this.classList.remove('over');
+    }
+
+    function drop() {
+        this.classList.remove('over');
+        if (this !== draggedItem) {
+            const allItems = [...reorderContainer.querySelectorAll('.reorder-item')];
+            const draggedIndex = allItems.indexOf(draggedItem);
+            const droppedIndex = allItems.indexOf(this);
+
+            if (draggedIndex < droppedIndex) {
+                reorderContainer.insertBefore(draggedItem, this.nextSibling);
+            } else {
+                reorderContainer.insertBefore(draggedItem, this);
+            }
+
+            // Update the actual metric containers order
+            const dashboard = document.querySelector('.dashboard');
+            const containers = Array.from(dashboard.querySelectorAll('.metric-container'));
+            if (draggedIndex < droppedIndex) {
+                dashboard.insertBefore(containers[draggedIndex], containers[droppedIndex].nextSibling);
+            } else {
+                dashboard.insertBefore(containers[draggedIndex], containers[droppedIndex]);
+            }
+
+            saveSettings(); // Save the new order
+        }
+        draggedItem.style.opacity = '1';
+        draggedItem = null;
+    }
+
+    // Reset to defaults
+    resetDefaultsButton.onclick = function() {
+        applySettings(defaultSettings);
+        saveSettings();
+        
+        // Update the dashboard layout
+        const dashboard = document.querySelector('.dashboard');
+        defaultSettings.displayOrder.forEach((item) => {
+            const container = Array.from(dashboard.children).find(c => 
+                c.querySelector('.label').textContent.trim().startsWith(item.name)
+            );
+            if (container) {
+                dashboard.appendChild(container);
+                container.style.display = item.visible ? 'flex' : 'none';
+            }
+        });
+
+        // Recreate reorder elements to reflect the new order
+        createReorderElements();
+
+        // Update UI elements to reflect default settings
+        columnCountValue.textContent = defaultSettings.columnCount;
+        scaleValue.textContent = defaultSettings.scale + '%';
+        document.querySelector('.scale-container').style.transform = `scale(${defaultSettings.scale / 100})`;
+        document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${defaultSettings.columnCount}, 1fr)`;
+    }
+
+    createReorderElements();
     loadSettings(); // Load saved settings
 }
 
