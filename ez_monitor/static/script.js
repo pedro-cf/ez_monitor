@@ -549,8 +549,19 @@ function initializeSettings() {
         showChartsCheckbox.checked = settings.showCharts;
         showChartsCheckbox.dispatchEvent(new Event('change'));
 
-        // Apply display order
-        applyDisplayOrder(settings.displayOrder);
+        // Apply display order and visibility
+        const dashboard = document.querySelector('.dashboard');
+        settings.displayOrder.forEach((item) => {
+            const container = Array.from(dashboard.children).find(c => 
+                c.querySelector('.label').textContent.trim().startsWith(item.name)
+            );
+            if (container) {
+                dashboard.appendChild(container);
+                container.style.display = item.visible ? 'flex' : 'none';
+            }
+        });
+
+        createReorderElements();
     }
 
     // Function to save settings
@@ -563,8 +574,11 @@ function initializeSettings() {
             showDynamicInfo: showDynamicInfoCheckbox.checked,
             showStaticInfo: showStaticInfoCheckbox.checked,
             showCharts: showChartsCheckbox.checked,
-            displayOrder: Array.from(document.querySelectorAll('.reorder-item'))
-                .map(item => item.querySelector('label span').textContent.trim())
+            displayOrder: Array.from(document.querySelectorAll('.metric-container'))
+                .map(container => ({
+                    name: container.querySelector('.label').textContent.trim().split(' ')[0],
+                    visible: container.style.display !== 'none'
+                }))
         };
 
         localStorage.setItem('ezMonitorSettings', JSON.stringify(settings));
@@ -579,7 +593,6 @@ function initializeSettings() {
         } else {
             applySettings(defaultSettings);
         }
-        createReorderElements();
     }
 
     // Open the modal
@@ -694,20 +707,6 @@ function initializeSettings() {
         }
         draggedItem.style.opacity = '1';
         draggedItem = null;
-    }
-
-    // Function to apply display order
-    function applyDisplayOrder(order) {
-        const dashboard = document.querySelector('.dashboard');
-        const containers = Array.from(document.querySelectorAll('.metric-container'));
-        
-        order.forEach((label) => {
-            const container = containers.find(c => c.querySelector('.label').textContent.trim().startsWith(label));
-            if (container) {
-                dashboard.appendChild(container);
-            }
-        });
-        createReorderElements();
     }
 
     // Reset to defaults
