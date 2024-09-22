@@ -510,6 +510,7 @@ function initializeSettings() {
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
     const resetDefaultsButton = document.getElementById('resetDefaults');
+    const reorderContainer = document.getElementById('reorderContainer');
 
     // Define default settings
     const defaultSettings = {
@@ -624,8 +625,8 @@ function initializeSettings() {
         }
     }
 
-    // Modify createContainerToggles function
-    function createContainerToggles() {
+    // Function to create reorder elements
+    function createReorderElements() {
         const containers = document.querySelectorAll('.metric-container');
         reorderContainer.innerHTML = '';
         containers.forEach((container) => {
@@ -637,30 +638,32 @@ function initializeSettings() {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `toggle-${label.toLowerCase()}`;
-            checkbox.checked = true;
+            checkbox.checked = container.style.display !== 'none';
             
-            const labelElement = document.createElement('label');
-            labelElement.htmlFor = checkbox.id;
-            labelElement.appendChild(checkbox);
+            reorderItem.innerHTML = `
+                <span class="drag-handle">☰</span>
+                <label for="${checkbox.id}">
+                    <span>${label}</span>
+                </label>
+            `;
+            reorderItem.insertBefore(checkbox, reorderItem.firstChild);
             
-            // Update the label text for Top Processes and Docker Containers
-            if (label === 'Top') {
-                labelElement.appendChild(document.createTextNode(' Show Top Processes'));
-            } else if (label === 'Docker') {
-                labelElement.appendChild(document.createTextNode(' Show Docker Containers'));
-            } else {
-                labelElement.appendChild(document.createTextNode(` Show ${label}`));
-            }
-            
-            containerToggles.appendChild(labelElement);
-            
+            reorderContainer.appendChild(reorderItem);
+
             checkbox.onchange = function() {
                 container.style.display = this.checked ? 'flex' : 'none';
                 saveSettings();
             }
+        });
 
-            // Add default value to defaultSettings
-            defaultSettings.containerToggles[checkbox.id] = true;
+        // Add drag and drop event listeners
+        const reorderItems = reorderContainer.querySelectorAll('.reorder-item');
+        reorderItems.forEach(item => {
+            item.addEventListener('dragstart', dragStart);
+            item.addEventListener('dragover', dragOver);
+            item.addEventListener('drop', drop);
+            item.addEventListener('dragenter', dragEnter);
+            item.addEventListener('dragleave', dragLeave);
         });
     }
 
@@ -766,6 +769,7 @@ function handleCursorVisibility() {
     }
 }
 
+
 // Add this event listener at the end of your script
 document.addEventListener('mousemove', handleCursorVisibility);
 
@@ -776,5 +780,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSettings();  // Add this line to initialize settings
     handleCursorVisibility(); // Add this line to initialize cursor visibility
 });
+
 
 // Remove any duplicate event listeners if they exist
