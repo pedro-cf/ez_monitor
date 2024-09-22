@@ -84,28 +84,7 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
             },
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    titleColor: 'rgba(255, 255, 255, 1)',
-                    bodyColor: 'rgba(255, 255, 255, 1)',
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (isPercentage) {
-                                label += context.parsed.y.toFixed(1) + '%';
-                            } else {
-                                label += context.parsed.y.toFixed(2);
-                            }
-                            return label;
-                        }
-                    }
-                }
+                
             },
             animation: { duration: 0 }
         }
