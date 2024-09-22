@@ -148,7 +148,7 @@ function updateCPUMetric(cpu) {
         <div class="value-box">Tasks: ${cpu.tasks}</div>
         <div class="value-box">Threads: ${cpu.threads}</div>
         <div class="value-box">Running: ${cpu.running}</div>
-        <div class="value-box">Load Avg: ${cpu.load_average}</div>
+        <div class="value-box">Load: ${cpu.load_average}</div>
     `;
     
     updateProgressColor(progress, cpu.usage);
@@ -173,7 +173,10 @@ function updateMemoryMetric(memory) {
     percentElement.textContent = `${memory.percent.toFixed(1)}%`;
     
     dynamicInfoElement.innerHTML = `
-        <div class="value-box">${memory.used} / ${memory.total}</div>
+        <div class="value-box">Used: ${memory.used} GB</div>
+        <div class="value-box">Total: ${memory.total} GB</div>
+        <div class="value-box">Swap: ${memory.swap_used} GB</div>
+        <div class="value-box">Swap Total: ${memory.swap_total} GB</div>
     `;
     
     infoElement.innerHTML = `
@@ -203,18 +206,21 @@ function updateMemoryMetric(memory) {
 function updateDiskMetric(disk) {
     const progress = document.getElementById('diskProgress');
     const percentElement = document.getElementById('diskPercent');
-    const usageElement = document.getElementById('diskUsage');
-    const freeElement = document.getElementById('diskFree');
+    const dynamicInfoElement = document.getElementById('diskDynamicInfo');
     const staticInfoElement = document.getElementById('diskStaticInfo');
     const maxLine = document.getElementById('diskMaxLine');
     
     progress.style.width = `${disk.percent}%`;
     percentElement.textContent = `${disk.percent.toFixed(1)}%`;
-    usageElement.textContent = `${disk.used} / ${disk.total}`;
-    freeElement.textContent = `Free: ${disk.free}`;
+    
+    dynamicInfoElement.innerHTML = `
+        <div class="value-box">Used: ${disk.used}</div>
+        <div class="value-box">Free: ${disk.free}</div>
+        <div class="value-box">Total: ${disk.total}</div>
+    `;
     
     staticInfoElement.innerHTML = `
-        Device: ${disk.device}<br>    
+        Device: ${disk.device}<br>
         Remote: ${disk.remote}<br>
         &nbsp;
     `;
@@ -248,8 +254,9 @@ function updateGPUMetric(gpu) {
         progress.style.width = `${gpu.percent}%`;
         percentElement.textContent = `${gpu.percent.toFixed(1)}%`;
         dynamicInfoElement.innerHTML = `
-            <div class="value-box">${gpu.memory_used} / ${gpu.memory_total}</div>
-            <div class="value-box">${gpu.temperature}°C</div>
+            <div class="value-box">Mem Used: ${gpu.memory_used}</div>
+            <div class="value-box">Mem Total: ${gpu.memory_total}</div>
+            <div class="value-box">Temp: ${gpu.temperature}°C</div>
         `;
         infoElement.innerHTML = `
             Name: ${gpu.name}<br>
@@ -287,7 +294,7 @@ function updateDiskIOMetric(diskIO) {
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Read: ${diskIO.read_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Write: ${diskIO.write_speed.toFixed(2)} MB/s</div>
-        <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
+        <div class="value-box">Total: ${totalSpeed.toFixed(2)} MB/s</div>
         <div class="value-box">Max: ${diskIOMax.toFixed(2)} MB/s</div>
     `;
     infoElement.innerHTML = `
@@ -320,8 +327,8 @@ function updateNetworkMetric(network) {
     progress.style.width = `${percent}%`;
     percentElement.textContent = `${percent.toFixed(1)}%`;
     dynamicInfoElement.innerHTML = `
-        <div class="value-box">Upload: ${(network.upload_speed * 1024).toFixed(2)} KB/s</div>
-        <div class="value-box">Download: ${(network.download_speed * 1024).toFixed(2)} KB/s</div>
+        <div class="value-box">Up: ${(network.upload_speed * 1024).toFixed(2)} KB/s</div>
+        <div class="value-box">Down: ${(network.download_speed * 1024).toFixed(2)} KB/s</div>
         <div class="value-box">Total: ${(totalSpeed * 1024).toFixed(2)} KB/s</div>
         <div class="value-box">Max: ${(networkMax * 1024).toFixed(2)} KB/s</div>
     `;
@@ -384,8 +391,84 @@ diskSelector.addEventListener('change', updateMetrics);
 // Update metrics every 2 seconds
 setInterval(updateMetrics, updateInterval);
 
-// Initialize charts and fetch initial data when the page loads
+// Move all the settings-related code inside a function
+function initializeSettings() {
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeButton = settingsModal.querySelector('.close');
+    const columnCountSlider = document.getElementById('columnCount');
+    const columnCountValue = document.getElementById('columnCountValue');
+    const showHeaderCheckbox = document.getElementById('showHeader');
+    const containerToggles = document.getElementById('containerToggles');
+
+    // Open the modal
+    settingsButton.onclick = function() {
+        settingsModal.style.display = 'block';
+    }
+
+    // Close the modal
+    closeButton.onclick = function() {
+        settingsModal.style.display = 'none';
+    }
+
+    // Close the modal if clicked outside
+    window.onclick = function(event) {
+        if (event.target == settingsModal) {
+            settingsModal.style.display = 'none';
+        }
+    }
+
+    // Update column count
+    columnCountSlider.oninput = function() {
+        const columnCount = this.value;
+        columnCountValue.textContent = columnCount;
+        document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+    }
+
+    // Toggle header visibility
+    showHeaderCheckbox.onchange = function() {
+        document.querySelector('.dashboard-header').style.display = this.checked ? 'block' : 'none';
+    }
+
+    // Create container toggles
+    function createContainerToggles() {
+        const containers = document.querySelectorAll('.metric-container');
+        containers.forEach((container, index) => {
+            const label = container.querySelector('.label').textContent.trim().split(' ')[0];
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `toggle-${label.toLowerCase()}`;
+            checkbox.checked = true;
+            
+            const labelElement = document.createElement('label');
+            labelElement.htmlFor = checkbox.id;
+            labelElement.appendChild(checkbox);
+            labelElement.appendChild(document.createTextNode(` Show ${label}`));
+            
+            containerToggles.appendChild(labelElement);
+            
+            checkbox.onchange = function() {
+                container.style.display = this.checked ? 'flex' : 'none';
+            }
+        });
+    }
+
+    createContainerToggles();
+    
+    // Set initial column count
+    columnCountSlider.value = '3';
+    columnCountSlider.dispatchEvent(new Event('input'));
+    
+    // Set initial header visibility
+    showHeaderCheckbox.checked = true;
+    showHeaderCheckbox.dispatchEvent(new Event('change'));
+}
+
+// Modify the existing DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', function() {
     initCharts();
     updateMetrics();
+    initializeSettings();  // Add this line to initialize settings
 });
+
+// Remove any duplicate event listeners if they exist

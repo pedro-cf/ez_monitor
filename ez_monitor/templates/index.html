@@ -61,10 +61,7 @@
                 <div id="diskProgress" class="progress"></div>
                 <div id="diskMaxLine" class="max-line"></div>
             </div>
-            <div class="disk-info-row">
-                <div id="diskUsage" class="value-box"></div>
-                <div id="diskFree" class="value-box"></div>
-            </div>
+            <div id="diskDynamicInfo" class="disk-info-row"></div>
             <div id="diskStaticInfo" class="info"></div>
             <div class="chart-container">
                 <canvas id="diskChart"></canvas>
@@ -96,5 +93,26 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Add this just before the closing </body> tag -->
+    <button id="settingsButton" class="settings-button">⚙️</button>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Dashboard Settings</h2>
+            <div class="setting">
+                <label for="columnCount">Number of Columns: <span id="columnCountValue">3</span></label>
+                <input type="range" id="columnCount" min="1" max="6" value="3" step="1">
+            </div>
+            <div class="setting">
+                <label>
+                    <input type="checkbox" id="showHeader" checked>
+                    Show Header
+                </label>
+            </div>
+            <h3>Show/Hide Containers:</h3>
+            <div id="containerToggles"></div>
+        </div>
+    </div>
 </body>
 </html>
