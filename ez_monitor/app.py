@@ -307,12 +307,15 @@ def get_docker_containers(limit=10):
                 mem_percent = (mem_usage / mem_limit) * 100 if mem_limit > 0 else 0
 
                 # Network I/O calculation
-                net_io = stats['networks']['eth0'] if 'networks' in stats and 'eth0' in stats['networks'] else {'rx_bytes': 0, 'tx_bytes': 0}
+                net_io = stats.get('networks', {}).get('eth0', {'rx_bytes': 0, 'tx_bytes': 0})
                 
                 # Block I/O calculation
                 blk_io = stats.get('blkio_stats', {}).get('io_service_bytes_recursive', [])
-                blk_read = sum(item['value'] for item in blk_io if item['op'] == 'Read')
-                blk_write = sum(item['value'] for item in blk_io if item['op'] == 'Write')
+                if blk_io is not None:
+                    blk_read = sum(item['value'] for item in blk_io if item.get('op') == 'Read')
+                    blk_write = sum(item['value'] for item in blk_io if item.get('op') == 'Write')
+                else:
+                    blk_read = blk_write = 0
 
                 # Get detailed container info
                 container_details = container.attrs
@@ -339,6 +342,8 @@ def get_docker_containers(limit=10):
                     'pid': container_details.get('State', {}).get('Pid', 'N/A')
                 })
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 logger.error(f"Error processing container {container.id}: {e}")
                 logger.error(f"Container state: {container.attrs.get('State', 'Unknown')}")
                 logger.error(f"Container status: {container.status}")
