@@ -412,15 +412,18 @@ input[type="range"] {
 
 /* Add these styles at the end of the file */
 #topProcesses, #dockerContainers {
+    overflow-x: auto; /* Add horizontal scrolling */
     overflow-y: auto;
     flex: 1;
     margin-top: 10px;
     min-height: 300px;
+    max-height: 400px; /* Limit the maximum height */
 }
 
 #topProcesses table, #dockerContainers table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate; /* Change to separate for better scrolling behavior */
+    border-spacing: 0;
     font-size: 12px;
 }
 
@@ -430,17 +433,37 @@ input[type="range"] {
     padding: 5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
+    min-width: 60px; /* Set a minimum width for columns */
 }
 
 #topProcesses th, #dockerContainers th {
-    font-weight: bold;
+    position: sticky; /* Make headers sticky */
+    top: 0;
+    background-color: #222; /* Match the container background */
+    z-index: 1;
+}
+
+#topProcesses th:after, #dockerContainers th:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-#topProcesses td:first-child, #dockerContainers td:first-child {
-    max-width: 70px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Adjust the metric container for better responsiveness */
+.metric-container {
+    min-width: 200px; /* Reduce minimum width */
+    max-width: 100%; /* Ensure it doesn't exceed the width of its parent */
+}
+
+/* Add media query for very narrow containers */
+@media (max-width: 250px) {
+    .metric-container {
+        min-width: 150px; /* Further reduce minimum width for very narrow containers */
+    }
 }
 
 /* Update the status dot styles to be used by both tables */
