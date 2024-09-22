@@ -215,33 +215,15 @@ canvas {
     color: #cccccc;
 }
 
+/* Remove these styles related to the toggle header button */
 .toggle-header {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    background-color: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: #ffffff;
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 4px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease, background-color 0.3s ease;
-    z-index: 10; /* Add this line */
-}
-
-.toggle-header:hover {
-    opacity: 1;
-    background-color: rgba(255, 255, 255, 0.2);
+    display: none; /* Hide the button instead of removing it completely */
 }
 
 .dashboard-header.hidden {
-    display: none;
+    display: block; /* Always show the header */
 }
 
 .dashboard-header.hidden + .dashboard {
-    margin-top: 40px;
+    margin-top: 20px; /* Consistent margin */
 }
