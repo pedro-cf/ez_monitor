@@ -46,16 +46,14 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
                     },
                     ticks: {
                         color: 'rgba(255, 255, 255, 0.7)',
-                        maxTicksLimit: 12,
+                        maxTicksLimit: 6,
                         maxRotation: 0,
                         font: {
                             size: 10
                         },
                         callback: function(value, index, values) {
-                            return new Date(value).toLocaleTimeString('en-GB', { 
-                                hour: '2-digit', 
-                                minute: '2-digit'
-                            });
+                            const date = new Date(this.getLabelForValue(value));
+                            return date.toTimeString().substr(0, 5);  // Returns time in HH:MM format
                         }
                     }
                 },
