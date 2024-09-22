@@ -407,3 +407,30 @@ input[type="range"] {
 #resetDefaults:hover {
     background-color: #555;
 }
+
+/* Add these styles at the end of the file */
+#topProcesses {
+    overflow-x: auto;  /* Add horizontal scroll for small screens */
+}
+
+#topProcesses table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12px;  /* Reduce font size to fit more columns */
+}
+
+#topProcesses th, #topProcesses td {
+    text-align: left;
+    padding: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#topProcesses th {
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#topProcesses td {
+    white-space: nowrap;  /* Prevent text wrapping in cells */
+}

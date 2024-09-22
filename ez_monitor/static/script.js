@@ -147,6 +147,9 @@ function updateCPUMetric(cpu) {
         <div class="value-box">Threads: ${cpu.threads}</div>
         <div class="value-box">Running: ${cpu.running}</div>
         <div class="value-box">Load: ${cpu.load_average}</div>
+        <div class="value-box">User: ${cpu.user.toFixed(1)}%</div>
+        <div class="value-box">System: ${cpu.system.toFixed(1)}%</div>
+        <div class="value-box">Idle: ${cpu.idle.toFixed(1)}%</div>
     `;
     
     updateProgressColor(progress, cpu.usage);
@@ -172,8 +175,10 @@ function updateMemoryMetric(memory) {
     
     dynamicInfoElement.innerHTML = `
         <div class="value-box">Used: ${memory.used} GB</div>
-        <div class="value-box">Total: ${memory.total} GB</div>
-        <div class="value-box">Swap: ${memory.swap_used} GB</div>
+        <div class="value-box">Available: ${memory.available} GB</div>
+        <div class="value-box">Cached: ${memory.cached} GB</div>
+        <div class="value-box">Buffers: ${memory.buffers} GB</div>
+        <div class="value-box">Swap Used: ${memory.swap_used} GB</div>
         <div class="value-box">Swap Total: ${memory.swap_total} GB</div>
     `;
     
@@ -360,6 +365,25 @@ function updateNetworkMetric(network) {
     updateChart(networkChart, totalSpeed * 1024);  // Convert to KB/s for the chart
 }
 
+function updateTopProcesses(processes) {
+    const topProcessesElement = document.getElementById('topProcesses');
+    let html = '<table><tr><th>PID</th><th>Name</th><th>CPU %</th><th>CPU Time</th><th>Memory %</th><th>Memory (MB)</th><th>Status</th><th>User</th></tr>';
+    processes.forEach(proc => {
+        html += `<tr>
+            <td>${proc.pid}</td>
+            <td>${proc.name}</td>
+            <td>${proc.cpu_percent.toFixed(1)}%</td>
+            <td>${proc.cpu_time.toFixed(2)}s</td>
+            <td>${proc.memory_percent.toFixed(1)}%</td>
+            <td>${proc.memory_mb.toFixed(1)}</td>
+            <td>${proc.status}</td>
+            <td>${proc.username}</td>
+        </tr>`;
+    });
+    html += '</table>';
+    topProcessesElement.innerHTML = html;
+}
+
 function updateMetrics() {
     const selectedDisk = diskSelector.value;
     fetch(`/metrics?disk=${encodeURIComponent(selectedDisk)}`)
@@ -372,6 +396,7 @@ function updateMetrics() {
             updateGPUMetric(data.gpu);
             updateDiskIOMetric(data.disk_io);
             updateNetworkMetric(data.network);
+            updateTopProcesses(data.top_processes);
             initializeScrollBehavior(); // Add this line
         })
         .catch(error => {

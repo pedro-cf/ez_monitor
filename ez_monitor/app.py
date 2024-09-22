@@ -41,13 +41,17 @@ def get_static_cpu_info():
 
 def get_cpu_info():
     static_info = get_static_cpu_info()
+    cpu_times_percent = psutil.cpu_times_percent()
     dynamic_info = {
         'usage': psutil.cpu_percent(interval=0.1),
         'frequency': f"{psutil.cpu_freq().current:.0f} MHz",
         'tasks': len(psutil.pids()),
         'threads': psutil.cpu_count(logical=True),
         'running': len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING]),
-        'load_average': get_load_average()
+        'load_average': get_load_average(),
+        'user': cpu_times_percent.user,
+        'system': cpu_times_percent.system,
+        'idle': cpu_times_percent.idle,
     }
     return {**static_info, **dynamic_info}
 
@@ -68,6 +72,9 @@ def get_memory_info():
         'total': f"{total_gb:.2f}",
         'used': f"{used_gb:.2f}",
         'percent': mem.percent,
+        'available': f"{mem.available / (1024 ** 3):.2f}",
+        'cached': f"{mem.cached / (1024 ** 3):.2f}",
+        'buffers': f"{mem.buffers / (1024 ** 3):.2f}",
         'swap_total': f"{swap.total / (1024 ** 3):.2f}",
         'swap_used': f"{swap.used / (1024 ** 3):.2f}",
         'swap_percent': swap.percent
@@ -244,6 +251,7 @@ def update_metrics():
             'gpu': get_gpu_info(),
             'disk_io': disk_io_speed,
             'network': {**net_speed, 'static_info': static_network_info},
+            'top_processes': get_top_processes(),
         }
         with metrics_lock:
             metrics.update(new_metrics)
@@ -273,6 +281,20 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
     
     return disk_io_speed, net_speed
 
+# Add this function to get top processes
+def get_top_processes(limit=5):
+    processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'cpu_times', 'status', 'username']):
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'cpu_percent', 'memory_percent', 'cpu_times', 'status', 'username'])
+            pinfo['cpu_time'] = sum(pinfo['cpu_times'])
+            pinfo['memory_mb'] = proc.memory_info().rss / (1024 * 1024)  # Convert to MB
+            processes.append(pinfo)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
+    return processes[:limit]
+
 # Flask Routes
 @app.route('/')
 def index():
@@ -295,7 +317,8 @@ def get_metrics():
             'disk': metrics.get('disk', {}).get(selected_disk, get_disk_info(selected_disk)),
             'gpu': metrics.get('gpu', {}),
             'disk_io': metrics.get('disk_io', {}),
-            'network': metrics.get('network', {})
+            'network': metrics.get('network', {}),
+            'top_processes': metrics.get('top_processes', []),
         }
     logger.debug(f"Metrics response: {response}")
     return jsonify(response)
