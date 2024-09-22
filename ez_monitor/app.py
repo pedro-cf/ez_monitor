@@ -69,17 +69,23 @@ def get_memory_info():
     total_gb = mem.total / (1024 ** 3)
     used_gb = mem.used / (1024 ** 3)
     
-    return {
+    memory_info = {
         'total': f"{total_gb:.2f}",
         'used': f"{used_gb:.2f}",
         'percent': mem.percent,
         'available': f"{mem.available / (1024 ** 3):.2f}",
-        'cached': f"{mem.cached / (1024 ** 3):.2f}",
-        'buffers': f"{mem.buffers / (1024 ** 3):.2f}",
         'swap_total': f"{swap.total / (1024 ** 3):.2f}",
         'swap_used': f"{swap.used / (1024 ** 3):.2f}",
         'swap_percent': swap.percent
     }
+    
+    # Add cached and buffers if available (Unix-like systems)
+    if hasattr(mem, 'cached'):
+        memory_info['cached'] = f"{mem.cached / (1024 ** 3):.2f}"
+    if hasattr(mem, 'buffers'):
+        memory_info['buffers'] = f"{mem.buffers / (1024 ** 3):.2f}"
+    
+    return memory_info
 
 # Disk Information
 def get_static_disk_info():

@@ -173,14 +173,24 @@ function updateMemoryMetric(memory) {
     progress.style.width = `${memory.percent}%`;
     percentElement.textContent = `${memory.percent.toFixed(1)}%`;
     
-    dynamicInfoElement.innerHTML = `
+    let dynamicInfoHTML = `
         <div class="value-box">Used: ${memory.used} GB</div>
         <div class="value-box">Available: ${memory.available} GB</div>
-        <div class="value-box">Cached: ${memory.cached} GB</div>
-        <div class="value-box">Buffers: ${memory.buffers} GB</div>
+    `;
+    
+    if (memory.cached) {
+        dynamicInfoHTML += `<div class="value-box">Cached: ${memory.cached} GB</div>`;
+    }
+    if (memory.buffers) {
+        dynamicInfoHTML += `<div class="value-box">Buffers: ${memory.buffers} GB</div>`;
+    }
+    
+    dynamicInfoHTML += `
         <div class="value-box">Swap Used: ${memory.swap_used} GB</div>
         <div class="value-box">Swap Total: ${memory.swap_total} GB</div>
     `;
+    
+    dynamicInfoElement.innerHTML = dynamicInfoHTML;
     
     infoElement.innerHTML = `
         Total RAM: ${memory.total}<br>
