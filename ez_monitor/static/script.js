@@ -10,6 +10,9 @@ let cpuChart, memoryChart, diskChart, gpuChart, diskIOChart, networkChart;
 const maxDataPoints = 1800; // Show last 60 minutes of data (60 * 60 / 2 = 1800)
 const updateInterval = 2000; // Update every 2000 milliseconds (2 seconds)
 
+// Add this near the top of the file with other initialization code
+let headerVisible = true;
+
 function createChart(ctx, label, isPercentage = true, fixedMax = null) {
     return new Chart(ctx, {
         type: 'line',
@@ -378,6 +381,22 @@ function updateProgressColor(progressElement, value) {
     progressElement.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
 }
 
+// Add this function to the file
+function toggleHeader() {
+    const header = document.querySelector('.dashboard-header');
+    const toggleButton = document.getElementById('toggleHeader');
+    
+    if (headerVisible) {
+        header.classList.add('hidden');
+        toggleButton.textContent = 'Show Header';
+    } else {
+        header.classList.remove('hidden');
+        toggleButton.textContent = 'Hide Header';
+    }
+    
+    headerVisible = !headerVisible;
+}
+
 // Update metrics when disk selection changes
 diskSelector.addEventListener('change', updateMetrics);
 
@@ -388,6 +407,9 @@ setInterval(updateMetrics, updateInterval);
 document.addEventListener('DOMContentLoaded', function() {
     initCharts();
     updateMetrics();
+    
+    // Add this line
+    document.getElementById('toggleHeader').addEventListener('click', toggleHeader);
 });
 
 // Remove the old event listener for DOMContentLoaded

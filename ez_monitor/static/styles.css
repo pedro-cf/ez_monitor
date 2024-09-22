@@ -195,10 +195,11 @@ canvas {
 
 .dashboard-header {
     text-align: center;
-    margin-bottom: 10px; /* Changed from 20px to 10px */
-    padding: 10px; /* Changed from 20px to 10px */
+    margin-bottom: 10px;
+    padding: 10px;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
+    position: relative; /* Add this line */
 }
 
 .dashboard-header h2 { /* Changed from h1 to h2 */
@@ -212,4 +213,35 @@ canvas {
     font-size: 18px;
     margin: 10px 0 0;
     color: #cccccc;
+}
+
+.toggle-header {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease, background-color 0.3s ease;
+    z-index: 10; /* Add this line */
+}
+
+.toggle-header:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-header.hidden {
+    display: none;
+}
+
+.dashboard-header.hidden + .dashboard {
+    margin-top: 40px;
 }
