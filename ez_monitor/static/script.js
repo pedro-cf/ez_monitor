@@ -403,6 +403,8 @@ function initializeSettings() {
     const showStaticInfoCheckbox = document.getElementById('showStaticInfo');
     const showChartsCheckbox = document.getElementById('showCharts');
     const containerToggles = document.getElementById('containerToggles');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const scaleValue = document.getElementById('scaleValue');
 
     // Open the modal
     settingsButton.onclick = function() {
@@ -501,6 +503,21 @@ function initializeSettings() {
     showStaticInfoCheckbox.dispatchEvent(new Event('change'));
     showChartsCheckbox.checked = true;
     showChartsCheckbox.dispatchEvent(new Event('change'));
+
+    // Scale functionality
+    scaleSlider.oninput = function() {
+        const scale = this.value / 100;
+        scaleValue.textContent = `${this.value}%`;
+        document.querySelector('.scale-container').style.transform = `scale(${scale})`;
+        document.querySelector('.scale-container').style.transformOrigin = 'top left';
+        // Adjust container size to prevent scrollbars
+        document.querySelector('.scale-container').style.width = `${100 / scale}%`;
+        document.querySelector('.scale-container').style.height = `${100 / scale}vh`;
+    }
+
+    // Set initial scale
+    scaleSlider.value = '100';
+    scaleSlider.dispatchEvent(new Event('input'));
 }
 
 // Modify the existing DOMContentLoaded event listener

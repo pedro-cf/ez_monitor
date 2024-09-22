@@ -8,133 +8,138 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <header class="dashboard-header">
-        <h2>{{ hostname }} ({{ ip_address }})</h2>
-    </header>
-    <div class="dashboard">
-        <div class="metric-container">
-            <div class="label">CPU <span id="cpuPercent" class="percentage"></span></div>
-            <div class="progress-bar">
-                <div id="cpuProgress" class="progress"></div>
-                <div id="cpuMaxLine" class="max-line"></div>
+    <div class="scale-container">
+        <header class="dashboard-header">
+            <h2>{{ hostname }} ({{ ip_address }})</h2>
+        </header>
+        <div class="dashboard">
+            <div class="metric-container">
+                <div class="label">CPU <span id="cpuPercent" class="percentage"></span></div>
+                <div class="progress-bar">
+                    <div id="cpuProgress" class="progress"></div>
+                    <div id="cpuMaxLine" class="max-line"></div>
+                </div>
+                <div id="cpuDynamicInfo" class="disk-info-row"></div>
+                <div id="cpuInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="cpuChart"></canvas>
+                </div>
             </div>
-            <div id="cpuDynamicInfo" class="disk-info-row"></div>
-            <div id="cpuInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="cpuChart"></canvas>
+            <div class="metric-container">
+                <div class="label">Memory <span id="memoryPercent" class="percentage"></span></div>
+                <div class="progress-bar">
+                    <div id="memoryProgress" class="progress"></div>
+                    <div id="memoryMaxLine" class="max-line"></div>
+                </div>
+                <div id="memoryDynamicInfo" class="disk-info-row"></div>
+                <div id="memoryInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="memoryChart"></canvas>
+                </div>
             </div>
-        </div>
-        <div class="metric-container">
-            <div class="label">Memory <span id="memoryPercent" class="percentage"></span></div>
-            <div class="progress-bar">
-                <div id="memoryProgress" class="progress"></div>
-                <div id="memoryMaxLine" class="max-line"></div>
+            <div class="metric-container">
+                <div class="label">GPU <span id="gpuPercent" class="percentage"></span></div>
+                <div class="progress-bar">
+                    <div id="gpuProgress" class="progress"></div>
+                    <div id="gpuMaxLine" class="max-line"></div>
+                </div>
+                <div id="gpuDynamicInfo" class="disk-info-row"></div>
+                <div id="gpuInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="gpuChart"></canvas>
+                </div>
             </div>
-            <div id="memoryDynamicInfo" class="disk-info-row"></div>
-            <div id="memoryInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="memoryChart"></canvas>
+            <div class="metric-container">
+                <div class="label">
+                    Disk Space <span id="diskPercent" class="percentage"></span>
+                    <select id="diskSelector" class="disk-selector">
+                        {% for disk in disks %}
+                        <option value="{{ disk }}">{{ disk }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="progress-bar">
+                    <div id="diskProgress" class="progress"></div>
+                    <div id="diskMaxLine" class="max-line"></div>
+                </div>
+                <div id="diskDynamicInfo" class="disk-info-row"></div>
+                <div id="diskStaticInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="diskChart"></canvas>
+                </div>
             </div>
-        </div>
-        <div class="metric-container">
-            <div class="label">GPU <span id="gpuPercent" class="percentage"></span></div>
-            <div class="progress-bar">
-                <div id="gpuProgress" class="progress"></div>
-                <div id="gpuMaxLine" class="max-line"></div>
+            <div class="metric-container">
+                <div class="label">Disk I/O <span id="diskIOPercent" class="percentage"></span></div>
+                <div class="progress-bar">
+                    <div id="diskIOProgress" class="progress"></div>
+                    <div id="diskIOMaxLine" class="max-line"></div>
+                </div>
+                <div id="diskIODynamicInfo" class="disk-info-row"></div>
+                <div id="diskIOInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="diskIOChart"></canvas>
+                </div>
             </div>
-            <div id="gpuDynamicInfo" class="disk-info-row"></div>
-            <div id="gpuInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="gpuChart"></canvas>
-            </div>
-        </div>
-        <div class="metric-container">
-            <div class="label">
-                Disk Space <span id="diskPercent" class="percentage"></span>
-                <select id="diskSelector" class="disk-selector">
-                    {% for disk in disks %}
-                    <option value="{{ disk }}">{{ disk }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="progress-bar">
-                <div id="diskProgress" class="progress"></div>
-                <div id="diskMaxLine" class="max-line"></div>
-            </div>
-            <div id="diskDynamicInfo" class="disk-info-row"></div>
-            <div id="diskStaticInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="diskChart"></canvas>
-            </div>
-        </div>
-        <div class="metric-container">
-            <div class="label">Disk I/O <span id="diskIOPercent" class="percentage"></span></div>
-            <div class="progress-bar">
-                <div id="diskIOProgress" class="progress"></div>
-                <div id="diskIOMaxLine" class="max-line"></div>
-            </div>
-            <div id="diskIODynamicInfo" class="disk-info-row"></div>
-            <div id="diskIOInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="diskIOChart"></canvas>
-            </div>
-        </div>
-        <div class="metric-container">
-            <div class="label">Network <span id="networkPercent" class="percentage"></span></div>
-            <div class="progress-bar">
-                <div id="networkProgress" class="progress"></div>
-                <div id="networkMaxLine" class="max-line"></div>
-            </div>
-            <div id="networkDynamicInfo" class="disk-info-row"></div>
-            <div id="networkInfo" class="info"></div>
-            <div class="chart-container">
-                <canvas id="networkChart"></canvas>
+            <div class="metric-container">
+                <div class="label">Network <span id="networkPercent" class="percentage"></span></div>
+                <div class="progress-bar">
+                    <div id="networkProgress" class="progress"></div>
+                    <div id="networkMaxLine" class="max-line"></div>
+                </div>
+                <div id="networkDynamicInfo" class="disk-info-row"></div>
+                <div id="networkInfo" class="info"></div>
+                <div class="chart-container">
+                    <canvas id="networkChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
+    <!-- The script tag, settings button, and settings modal remain outside the scale-container -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <!-- Add this just before the closing </body> tag -->
     <button id="settingsButton" class="settings-button">⚙️</button>
-
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Dashboard Settings</h2>
-            <div class="setting">
-                <label for="columnCount">Number of Columns: <span id="columnCountValue">3</span></label>
+            <h2>Settings</h2>
+            <div class="setting slider-setting">
+                <label for="columnCount">Columns: <span id="columnCountValue">3</span></label>
                 <input type="range" id="columnCount" min="1" max="6" value="3" step="1">
             </div>
-            <div class="setting">
+            <div class="setting slider-setting">
+                <label for="scaleSlider">Scale: <span id="scaleValue">100%</span></label>
+                <input type="range" id="scaleSlider" min="50" max="200" value="100" step="10">
+            </div>
+            <div class="setting checkbox-setting">
                 <label>
                     <input type="checkbox" id="showHeader" checked>
                     Show Header
                 </label>
             </div>
-            <div class="setting">
+            <div class="setting checkbox-setting">
                 <label>
                     <input type="checkbox" id="showGauges" checked>
                     Show Gauges
                 </label>
             </div>
-            <div class="setting">
+            <div class="setting checkbox-setting">
                 <label>
                     <input type="checkbox" id="showDynamicInfo" checked>
                     Show Dynamic Info Boxes
                 </label>
             </div>
-            <div class="setting">
+            <div class="setting checkbox-setting">
                 <label>
                     <input type="checkbox" id="showStaticInfo" checked>
                     Show Static Info Boxes
                 </label>
             </div>
-            <div class="setting">
+            <div class="setting checkbox-setting">
                 <label>
                     <input type="checkbox" id="showCharts" checked>
                     Show Charts
                 </label>
             </div>
-            <h3>Show/Hide Containers:</h3>
+            <h3>Metrics:</h3>
             <div id="containerToggles"></div>
         </div>
     </div>
