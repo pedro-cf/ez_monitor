@@ -263,8 +263,10 @@ canvas {
     height: 40px;
     font-size: 20px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, opacity 0.3s, transform 0.3s; /* Add transitions */
     z-index: 1001; /* Ensure it's above the scaled content */
+    opacity: 1; /* Start fully visible */
+    transform: translateX(0); /* Start in normal position */
 }
 
 .settings-button:hover {

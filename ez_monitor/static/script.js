@@ -10,6 +10,13 @@ let cpuChart, memoryChart, diskChart, gpuChart, diskIOChart, networkChart;
 const maxDataPoints = 1800; // Show last 60 minutes of data (60 * 60 / 2 = 1800)
 const updateInterval = 2000; // Update every 2000 milliseconds (2 seconds)
 
+let cursorTimeout;
+let settingsButtonTimeout;
+const cursorHideDelay = 3000; // 3 seconds
+const settingsButtonHideDelay = 3000; // 3 seconds
+
+let isSettingsVisible = false;
+
 function createChart(ctx, label, isPercentage = true, fixedMax = null) {
     return new Chart(ctx, {
         type: 'line',
@@ -590,17 +597,23 @@ function initializeSettings() {
     // Open the modal
     settingsButton.onclick = function() {
         settingsModal.style.display = 'block';
+        isSettingsVisible = true;
+        handleCursorVisibility(); // Ensure cursor and settings button are visible
     }
 
     // Close the modal
     closeButton.onclick = function() {
         settingsModal.style.display = 'none';
+        isSettingsVisible = false;
+        handleCursorVisibility(); // Re-enable hiding
     }
 
     // Close the modal if clicked outside
     window.onclick = function(event) {
         if (event.target == settingsModal) {
             settingsModal.style.display = 'none';
+            isSettingsVisible = false;
+            handleCursorVisibility(); // Re-enable hiding
         }
     }
 
@@ -716,11 +729,37 @@ function initializeSettings() {
     loadSettings(); // Load saved settings
 }
 
+// Add this function to handle cursor and settings button visibility
+function handleCursorVisibility() {
+    document.body.style.cursor = 'default';
+    clearTimeout(cursorTimeout);
+    clearTimeout(settingsButtonTimeout);
+    
+    const settingsButton = document.getElementById('settingsButton');
+    settingsButton.style.opacity = '1';
+    settingsButton.style.transform = 'translateX(0)';
+    
+    if (!isSettingsVisible) {
+        cursorTimeout = setTimeout(() => {
+            document.body.style.cursor = 'none';
+        }, cursorHideDelay);
+        
+        settingsButtonTimeout = setTimeout(() => {
+            settingsButton.style.opacity = '0';
+            settingsButton.style.transform = 'translateX(100%)';
+        }, settingsButtonHideDelay);
+    }
+}
+
+// Add this event listener at the end of your script
+document.addEventListener('mousemove', handleCursorVisibility);
+
 // Modify the existing DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', function() {
     initCharts();
     updateMetrics();
     initializeSettings();  // Add this line to initialize settings
+    handleCursorVisibility(); // Add this line to initialize cursor visibility
 });
 
 // Remove any duplicate event listeners if they exist
