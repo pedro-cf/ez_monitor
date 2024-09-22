@@ -69,16 +69,6 @@ This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, keep 
 ## Requirements
 
 ez_monitor requires Python 3.7 or higher. All other dependencies will be automatically installed when you install ez_monitor using pip.
-- **Top Processes**: View a list of the top processes consuming system resources, including CPU usage, memory usage, and process status.
-- **Docker Containers**: If Docker is available on your system, ez_monitor now displays information about running containers, including resource usage and status.
-- **Customizable Layout**: Adjust the number of columns in the dashboard layout to best fit your screen.
-- **Scalable Interface**: Use the scale slider in the settings to resize the entire dashboard, making it easier to fit on different screen sizes.
-- **Component Toggles**: Show or hide individual metric components (CPU, Memory, Disk, etc.) as needed.
-- **Persistent Settings**: Your layout and display preferences are now saved and persisted between sessions.
-
-## Requirements
-
-ez_monitor requires Python 3.7 or higher. All other dependencies will be automatically installed when you install ez_monitor using pip.
 
 ## License
 
