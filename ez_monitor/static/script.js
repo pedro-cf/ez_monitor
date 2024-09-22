@@ -526,7 +526,8 @@ function initializeSettings() {
         showDynamicInfo: true,
         showStaticInfo: true,
         showCharts: true,
-        containerToggles: {}
+        containerToggles: {},
+        metricOrder: []
     };
 
     // Function to apply settings
@@ -558,6 +559,15 @@ function initializeSettings() {
             checkbox.checked = settings.containerToggles[id] !== undefined ? settings.containerToggles[id] : true;
             checkbox.dispatchEvent(new Event('change'));
         });
+
+        // Apply metric order
+        if (settings.metricOrder) {
+            const dashboard = document.querySelector('.dashboard');
+            const metricContainers = Array.from(dashboard.querySelectorAll('.metric-container'));
+            settings.metricOrder.forEach((index) => {
+                dashboard.appendChild(metricContainers[index]);
+            });
+        }
     }
 
     // Reset to defaults
@@ -604,7 +614,8 @@ function initializeSettings() {
             showDynamicInfo: showDynamicInfoCheckbox.checked,
             showStaticInfo: showStaticInfoCheckbox.checked,
             showCharts: showChartsCheckbox.checked,
-            containerToggles: {}
+            containerToggles: {},
+            metricOrder: Array.from(document.querySelectorAll('.toggle-item')).map(item => parseInt(item.dataset.index))
         };
 
         // Save container toggle states
@@ -659,8 +670,19 @@ function initializeSettings() {
     // Modify createContainerToggles function
     function createContainerToggles() {
         const containers = document.querySelectorAll('.metric-container');
+        containerToggles.innerHTML = ''; // Clear existing toggles
+
         containers.forEach((container, index) => {
             const label = container.querySelector('.label').textContent.trim().split(' ')[0];
+            const toggleItem = document.createElement('div');
+            toggleItem.className = 'toggle-item';
+            toggleItem.draggable = true;
+            toggleItem.dataset.index = index;
+
+            const dragHandle = document.createElement('span');
+            dragHandle.className = 'drag-handle';
+            dragHandle.innerHTML = '&#8942;&#8942;'; // Unicode for vertical dots
+
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `toggle-${label.toLowerCase()}`;
@@ -668,18 +690,20 @@ function initializeSettings() {
             
             const labelElement = document.createElement('label');
             labelElement.htmlFor = checkbox.id;
-            labelElement.appendChild(checkbox);
             
             // Update the label text for Top Processes and Docker Containers
             if (label === 'Top') {
-                labelElement.appendChild(document.createTextNode(' Show Top Processes'));
+                labelElement.appendChild(document.createTextNode('Top Processes'));
             } else if (label === 'Docker') {
-                labelElement.appendChild(document.createTextNode(' Show Docker Containers'));
+                labelElement.appendChild(document.createTextNode('Docker Containers'));
             } else {
-                labelElement.appendChild(document.createTextNode(` Show ${label}`));
+                labelElement.appendChild(document.createTextNode(label));
             }
             
-            containerToggles.appendChild(labelElement);
+            toggleItem.appendChild(dragHandle);
+            toggleItem.appendChild(checkbox);
+            toggleItem.appendChild(labelElement);
+            containerToggles.appendChild(toggleItem);
             
             checkbox.onchange = function() {
                 container.style.display = this.checked ? 'flex' : 'none';
@@ -689,6 +713,61 @@ function initializeSettings() {
             // Add default value to defaultSettings
             defaultSettings.containerToggles[checkbox.id] = true;
         });
+
+        initSortable();
+    }
+
+    function initSortable() {
+        let draggedItem = null;
+
+        containerToggles.addEventListener('dragstart', (e) => {
+            draggedItem = e.target;
+            setTimeout(() => e.target.style.display = 'none', 0);
+        });
+
+        containerToggles.addEventListener('dragend', (e) => {
+            setTimeout(() => {
+                e.target.style.display = '';
+                draggedItem = null;
+            }, 0);
+        });
+
+        containerToggles.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(containerToggles, e.clientY);
+            const currentElement = draggedItem;
+            if (afterElement === null) {
+                containerToggles.appendChild(draggedItem);
+            } else {
+                containerToggles.insertBefore(draggedItem, afterElement);
+            }
+            updateMetricOrder();
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.toggle-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+    }
+
+    function updateMetricOrder() {
+        const newOrder = Array.from(document.querySelectorAll('.toggle-item')).map(item => parseInt(item.dataset.index));
+        const dashboard = document.querySelector('.dashboard');
+        const metricContainers = Array.from(dashboard.querySelectorAll('.metric-container'));
+        
+        newOrder.forEach((oldIndex, newIndex) => {
+            dashboard.appendChild(metricContainers[oldIndex]);
+        });
+
+        saveSettings();
     }
 
     // Modify scale functionality

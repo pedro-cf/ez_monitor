@@ -31,9 +31,9 @@ body {
 .progress-bar {
     position: relative;
     width: 100%;
-    height: 30px;
+    height: 20px; /* Reduced from 30px to 20px */
     background-color: #333;
-    border-radius: 10px; /* Keep the outer corners rounded */
+    border-radius: 10px;
     overflow: hidden;
     margin-bottom: 10px;
 }
@@ -44,13 +44,13 @@ body {
     border-radius: 0; /* Remove border-radius to keep it rectangular */
 }
 .label {
-    margin-bottom: 10px;
-    font-size: 22px;
+    margin-bottom: 5px; /* Reduced from 10px to 5px */
+    font-size: 18px; /* Reduced from 22px to 18px */
     font-weight: 600;
-    height: 36px;
+    height: 24px; /* Reduced from 36px to 24px */
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Changed from space-between to flex-start */
+    justify-content: space-between; /* Changed back to space-between */
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #ffffff;
@@ -58,10 +58,9 @@ body {
 }
 
 .percentage {
-    margin-left: 10px;
-    font-size: 18px;
+    font-size: 16px; /* Reduced from 18px to 16px */
     font-weight: 500;
-    padding: 2px 8px;
+    padding: 2px 6px; /* Reduced horizontal padding from 8px to 6px */
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.15);
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
@@ -82,18 +81,18 @@ body {
 .value-box {
     display: inline-block;
     background-color: rgba(255, 255, 255, 0.1);
-    padding: 3px 6px;
+    padding: 2px 4px; /* Reduced padding */
     border-radius: 3px;
-    margin-right: 5px;
-    font-size: 12px;
+    margin-right: 4px; /* Reduced margin */
+    font-size: 11px; /* Reduced font size */
     font-weight: 500;
     flex: 0 1 auto; /* Allow boxes to shrink but not grow */
-    min-width: 80px; /* Set a minimum width to prevent excessive shrinking */
+    min-width: 70px; /* Reduced minimum width */
     text-align: center;
     white-space: nowrap; /* Prevent text wrapping within boxes */
     overflow: hidden;
     text-overflow: ellipsis; /* Add ellipsis for overflowing text */
-    margin-bottom: 5px; /* Add some vertical spacing between value boxes */
+    margin-bottom: 3px; /* Reduced vertical spacing */
 }
 .value-box.percentage {
     background-color: rgba(255, 255, 255, 0.15);
@@ -163,11 +162,12 @@ body {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    align-items: flex-start; /* Changed from center to flex-start */
+    align-items: center; /* Changed back to center */
     gap: 5px;
+    margin-top: 5px; /* Added margin-top */
     margin-bottom: 5px;
     flex: 0 0 auto; /* Don't grow, don't shrink, size based on content */
-    min-height: 60px; /* Minimum height instead of fixed height */
+    min-height: 30px; /* Reduced from 60px to 30px */
     overflow: hidden; /* Hide scrollbars */
 }
 
@@ -344,7 +344,6 @@ canvas {
 #containerToggles label {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
 }
 
 #containerToggles input[type="checkbox"] {
@@ -404,6 +403,7 @@ input[type="range"] {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin-top: 10px;
 }
 
 #resetDefaults:hover {
@@ -483,4 +483,34 @@ input[type="range"] {
 
 .status-unknown {
     background-color: #9E9E9E;
+}
+
+.sortable-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.toggle-item {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    margin-bottom: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    cursor: move;
+}
+
+.drag-handle {
+    margin-right: 10px;
+    cursor: move;
+    color: #888;
+}
+
+.toggle-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toggle-item label {
+    margin-left: 5px;
+    cursor: pointer;
 }
