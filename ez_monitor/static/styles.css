@@ -131,7 +131,7 @@ body {
     color: rgba(255, 255, 255, 0.5);
 }
 .disk-selector {
-    margin-left: auto; /* This will push the selector to the right */
+    margin-left: auto;
     font-size: 14px;
     background-color: rgba(255, 255, 255, 0.1);
     border: none;
@@ -140,10 +140,22 @@ body {
     border-radius: 4px;
     outline: none;
     transition: background-color 0.3s ease;
-    max-width: 100px; /* Add this line to limit the width */
+    max-width: 100px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px top 50%;
+    background-size: 16px;
+    padding-right: 30px;
 }
 .disk-selector:hover, .disk-selector:focus {
     background-color: rgba(255, 255, 255, 0.2);
+}
+.disk-selector option {
+    background-color: #222;
+    color: #fff;
 }
 .disk-info-row {
     display: flex;
