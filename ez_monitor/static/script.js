@@ -288,6 +288,7 @@ function updateDiskIOMetric(diskIO) {
         <div class="value-box">Read: ${diskIO.read_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Write: ${diskIO.write_speed.toFixed(2)} MB/s</div>
         <div class="value-box">Total I/O: ${totalSpeed.toFixed(2)} MB/s</div>
+        <div class="value-box">Max: ${diskIOMax.toFixed(2)} MB/s</div>
     `;
     infoElement.innerHTML = `
         Filesystem: ${diskIO.filesystem || 'Unknown'}<br>
@@ -322,6 +323,7 @@ function updateNetworkMetric(network) {
         <div class="value-box">Upload: ${(network.upload_speed * 1024).toFixed(2)} KB/s</div>
         <div class="value-box">Download: ${(network.download_speed * 1024).toFixed(2)} KB/s</div>
         <div class="value-box">Total: ${(totalSpeed * 1024).toFixed(2)} KB/s</div>
+        <div class="value-box">Max: ${(networkMax * 1024).toFixed(2)} KB/s</div>
     `;
     
     // Add simplified static network information
