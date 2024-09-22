@@ -365,23 +365,102 @@ function updateNetworkMetric(network) {
     updateChart(networkChart, totalSpeed * 1024);  // Convert to KB/s for the chart
 }
 
+// Update the updateTopProcesses function
 function updateTopProcesses(processes) {
     const topProcessesElement = document.getElementById('topProcesses');
-    let html = '<table><tr><th>PID</th><th>Name</th><th>CPU %</th><th>CPU Time</th><th>Memory %</th><th>Memory (MB)</th><th>Status</th><th>User</th></tr>';
+    let html = '<table><tr><th>PID</th><th>Name</th><th>Status</th><th>CPU %</th><th>MEM %</th><th>MEM (MB)</th><th>CPU Time</th><th>User</th></tr>';
     processes.forEach(proc => {
+        const statusClass = getProcessStatusClass(proc.status);
         html += `<tr>
             <td>${proc.pid}</td>
             <td>${proc.name}</td>
+            <td><span class="status-dot ${statusClass}"></span>${proc.status}</td>
             <td>${proc.cpu_percent.toFixed(1)}%</td>
-            <td>${proc.cpu_time.toFixed(2)}s</td>
             <td>${proc.memory_percent.toFixed(1)}%</td>
             <td>${proc.memory_mb.toFixed(1)}</td>
-            <td>${proc.status}</td>
+            <td>${proc.cpu_time.toFixed(2)}s</td>
             <td>${proc.username}</td>
         </tr>`;
     });
     html += '</table>';
     topProcessesElement.innerHTML = html;
+}
+
+function getProcessStatusClass(status) {
+    switch (status.toLowerCase()) {
+        case 'running':
+            return 'status-running';
+        case 'sleeping':
+            return 'status-sleeping';
+        case 'disk-sleep':
+            return 'status-disk-sleep';
+        case 'stopped':
+            return 'status-stopped';
+        case 'tracing-stop':
+            return 'status-tracing-stop';
+        case 'zombie':
+            return 'status-zombie';
+        case 'dead':
+            return 'status-dead';
+        case 'wake-kill':
+            return 'status-wake-kill';
+        case 'waking':
+            return 'status-waking';
+        default:
+            return 'status-unknown';
+    }
+}
+
+// Update the updateDockerContainers function
+function updateDockerContainers(containers) {
+    const dockerContainersElement = document.getElementById('dockerContainers');
+    let html = '<table><tr><th>ID</th><th>Name</th><th>Status</th><th>CPU %</th><th>MEM %</th><th>MEM Usage</th><th>NET I/O</th><th>BLOCK I/O</th></tr>';
+    
+    if (containers === null) {
+        html += '<tr><td colspan="8">Docker is not available on this system.</td></tr>';
+    } else if (containers.length === 0) {
+        html += '<tr><td colspan="8">No Docker containers found.</td></tr>';
+    } else {
+        containers.forEach(container => {
+            const statusClass = getStatusClass(container.status);
+            html += `<tr>
+                <td title="${container.id}">${container.short_id}</td>
+                <td>${container.name}</td>
+                <td><span class="status-dot ${statusClass}"></span>${container.status}</td>
+                <td>${container.cpu_percent.toFixed(2)}%</td>
+                <td>${container.mem_percent.toFixed(2)}%</td>
+                <td>${container.mem_usage} / ${container.mem_limit}</td>
+                <td>${container.net_io}</td>
+                <td>${container.block_io}</td>
+            </tr>`;
+        });
+    }
+    
+    html += '</table>';
+    dockerContainersElement.innerHTML = html;
+}
+
+function getStatusClass(status) {
+    switch (status.toLowerCase()) {
+        case 'running':
+            return 'status-running';
+        case 'healthy':
+            return 'status-healthy';
+        case 'unhealthy':
+            return 'status-unhealthy';
+        case 'starting':
+            return 'status-starting';
+        case 'created':
+        case 'restarting':
+            return 'status-restarting';
+        case 'paused':
+            return 'status-paused';
+        case 'exited':
+        case 'dead':
+            return 'status-exited';
+        default:
+            return 'status-unknown';
+    }
 }
 
 function updateMetrics() {
@@ -397,6 +476,12 @@ function updateMetrics() {
             updateDiskIOMetric(data.disk_io);
             updateNetworkMetric(data.network);
             updateTopProcesses(data.top_processes);
+            if ('docker_containers' in data) {
+                updateDockerContainers(data.docker_containers);
+            } else {
+                const dockerContainersElement = document.getElementById('dockerContainers');
+                dockerContainersElement.innerHTML = '<p>Docker information is not available.</p>';
+            }
             initializeScrollBehavior(); // Add this line
         })
         .catch(error => {

@@ -411,31 +411,76 @@ input[type="range"] {
 }
 
 /* Add these styles at the end of the file */
-#topProcesses {
-    overflow-y: auto; /* Add vertical scroll for processes */
-    flex: 1; /* Allow it to grow and fill the container */
-    margin-top: 10px; /* Add some space between the label and the table */
-    min-height: 300px; /* Increase the minimum height */
+#topProcesses, #dockerContainers {
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 10px;
+    min-height: 300px;
 }
 
-#topProcesses table {
+#topProcesses table, #dockerContainers table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 12px;  /* Reduce font size to fit more columns */
+    font-size: 12px;
 }
 
-#topProcesses th, #topProcesses td {
+#topProcesses th, #topProcesses td,
+#dockerContainers th, #dockerContainers td {
     text-align: left;
     padding: 5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
 }
 
-#topProcesses th {
+#topProcesses th, #dockerContainers th {
     font-weight: bold;
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-#topProcesses td {
-    white-space: nowrap;  /* Prevent text wrapping in cells */
+#topProcesses td:first-child, #dockerContainers td:first-child {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Update the status dot styles to be used by both tables */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+/* Combine and simplify status color classes */
+.status-running, .status-healthy {
+    background-color: #4CAF50;
+}
+
+.status-sleeping, .status-starting, .status-restarting {
+    background-color: #2196F3;
+}
+
+.status-disk-sleep, .status-paused {
+    background-color: #9C27B0;
+}
+
+.status-stopped, .status-exited, .status-dead {
+    background-color: #F44336;
+}
+
+.status-tracing-stop, .status-unhealthy {
+    background-color: #FF9800;
+}
+
+.status-zombie, .status-wake-kill {
+    background-color: #795548;
+}
+
+.status-waking {
+    background-color: #FFEB3B;
+}
+
+.status-unknown {
+    background-color: #9E9E9E;
 }
