@@ -243,61 +243,73 @@ def get_docker_containers(limit=10):
     try:
         client = docker.from_env()
         containers = client.containers.list(all=True)
+        
+        if containers is None:
+            logger.warning("Docker client returned None for container list")
+            return []
+
         container_info = []
         for container in containers[:limit]:
-            stats = container.stats(stream=False)
-            
-            # CPU usage calculation
-            cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
-            system_delta = stats['cpu_stats']['system_cpu_usage'] - stats['precpu_stats']['system_cpu_usage']
-            cpu_percent = 0
-            if system_delta > 0:
-                cpu_percent = (cpu_delta / system_delta) * len(stats['cpu_stats']['cpu_usage']['percpu_usage']) * 100
+            try:
+                stats = container.stats(stream=False)
+                
+                # CPU usage calculation with fallback for Windows
+                cpu_percent = 0
+                try:
+                    cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
+                    system_delta = stats['cpu_stats'].get('system_cpu_usage', 0) - stats['precpu_stats'].get('system_cpu_usage', 0)
+                    if system_delta > 0:
+                        cpu_percent = (cpu_delta / system_delta) * len(stats['cpu_stats']['cpu_usage']['percpu_usage']) * 100
+                except KeyError:
+                    # Fallback for Windows or if keys are missing
+                    cpu_percent = stats['cpu_stats']['cpu_usage']['total_usage'] / 10000000  # Rough estimate
 
-            # Memory usage calculation
-            mem_usage = stats['memory_stats'].get('usage', 0)
-            mem_limit = stats['memory_stats'].get('limit', 1)
-            mem_percent = (mem_usage / mem_limit) * 100 if mem_limit > 0 else 0
+                # Memory usage calculation
+                mem_usage = stats['memory_stats'].get('usage', 0)
+                mem_limit = stats['memory_stats'].get('limit', 1)
+                mem_percent = (mem_usage / mem_limit) * 100 if mem_limit > 0 else 0
 
-            # Network I/O calculation
-            net_io = stats['networks']['eth0'] if 'eth0' in stats.get('networks', {}) else {'rx_bytes': 0, 'tx_bytes': 0}
-            
-            # Block I/O calculation
-            blk_io = stats.get('blkio_stats', {}).get('io_service_bytes_recursive', [])
-            blk_read = sum(item['value'] for item in blk_io if item['op'] == 'Read')
-            blk_write = sum(item['value'] for item in blk_io if item['op'] == 'Write')
+                # Network I/O calculation
+                net_io = stats['networks']['eth0'] if 'networks' in stats and 'eth0' in stats['networks'] else {'rx_bytes': 0, 'tx_bytes': 0}
+                
+                # Block I/O calculation
+                blk_io = stats.get('blkio_stats', {}).get('io_service_bytes_recursive', [])
+                blk_read = sum(item['value'] for item in blk_io if item['op'] == 'Read')
+                blk_write = sum(item['value'] for item in blk_io if item['op'] == 'Write')
 
-            # Get detailed container info
-            container_details = container.attrs
-            
-            # Determine the status
-            status = container.status
-            if status == 'running':
-                health = container_details.get('State', {}).get('Health', {}).get('Status')
-                if health:
-                    status = health  # This will be 'healthy', 'unhealthy', or 'starting'
-            
-            container_info.append({
-                'id': container.id,  # Full container ID
-                'short_id': container.short_id,
-                'name': container.name,
-                'status': status,
-                'image': container.image.tags[0] if container.image.tags else 'N/A',
-                'cpu_percent': round(cpu_percent, 2),
-                'mem_percent': round(mem_percent, 2),
-                'mem_usage': f"{mem_usage / (1024 * 1024):.2f}MB",
-                'mem_limit': f"{mem_limit / (1024 * 1024):.2f}MB",
-                'net_io': f"{net_io['rx_bytes'] / (1024 * 1024):.2f}MB / {net_io['tx_bytes'] / (1024 * 1024):.2f}MB",
-                'block_io': f"{blk_read / (1024 * 1024):.2f}MB / {blk_write / (1024 * 1024):.2f}MB",
-                'pid': container_details.get('State', {}).get('Pid', 'N/A')
-            })
+                # Get detailed container info
+                container_details = container.attrs
+                
+                # Determine the status
+                status = container.status
+                if status == 'running':
+                    health = container_details.get('State', {}).get('Health', {}).get('Status')
+                    if health:
+                        status = health  # This will be 'healthy', 'unhealthy', or 'starting'
+                
+                container_info.append({
+                    'id': container.id,  # Full container ID
+                    'short_id': container.short_id,
+                    'name': container.name,
+                    'status': status,
+                    'image': container.image.tags[0] if container.image.tags else 'N/A',
+                    'cpu_percent': round(cpu_percent, 2),
+                    'mem_percent': round(mem_percent, 2),
+                    'mem_usage': f"{mem_usage / (1024 * 1024):.2f}MB",
+                    'mem_limit': f"{mem_limit / (1024 * 1024):.2f}MB",
+                    'net_io': f"{net_io['rx_bytes'] / (1024 * 1024):.2f}MB / {net_io['tx_bytes'] / (1024 * 1024):.2f}MB",
+                    'block_io': f"{blk_read / (1024 * 1024):.2f}MB / {blk_write / (1024 * 1024):.2f}MB",
+                    'pid': container_details.get('State', {}).get('Pid', 'N/A')
+                })
+            except Exception as e:
+                logger.error(f"Error processing container {container.id}: {e}")
         return container_info
     except docker.errors.DockerException as e:
         logger.warning(f"Docker is not available: {e}")
-        return None
+        return []
     except Exception as e:
         logger.error(f"Error getting Docker container info: {e}")
-        return None
+        return []
 
 # Metrics Update
 def update_metrics():
