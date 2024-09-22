@@ -28,6 +28,9 @@ setup(
         "requests==2.26.0",
         "pywin32==301; platform_system=='Windows'",
     ],
+    extras_require={
+        'windows': ["pywin32==301"],
+    },
     entry_points={
         "console_scripts": [
             "ez_monitor=ez_monitor.app:main",
