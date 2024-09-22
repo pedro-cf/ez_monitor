@@ -405,6 +405,67 @@ function initializeSettings() {
     const containerToggles = document.getElementById('containerToggles');
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
+    const resetDefaultsButton = document.getElementById('resetDefaults');
+
+    // Define default settings
+    const defaultSettings = {
+        columnCount: '3',
+        scale: '100',
+        showHeader: true,
+        showGauges: true,
+        showDynamicInfo: true,
+        showStaticInfo: true,
+        showCharts: true,
+        containerToggles: {}
+    };
+
+    // Function to apply settings
+    function applySettings(settings) {
+        columnCountSlider.value = settings.columnCount;
+        columnCountSlider.dispatchEvent(new Event('input'));
+        
+        scaleSlider.value = settings.scale;
+        scaleSlider.dispatchEvent(new Event('input'));
+        
+        showHeaderCheckbox.checked = settings.showHeader;
+        showHeaderCheckbox.dispatchEvent(new Event('change'));
+        
+        showGaugesCheckbox.checked = settings.showGauges;
+        showGaugesCheckbox.dispatchEvent(new Event('change'));
+        
+        showDynamicInfoCheckbox.checked = settings.showDynamicInfo;
+        showDynamicInfoCheckbox.dispatchEvent(new Event('change'));
+        
+        showStaticInfoCheckbox.checked = settings.showStaticInfo;
+        showStaticInfoCheckbox.dispatchEvent(new Event('change'));
+        
+        showChartsCheckbox.checked = settings.showCharts;
+        showChartsCheckbox.dispatchEvent(new Event('change'));
+
+        // Apply container toggle states
+        document.querySelectorAll('#containerToggles input[type="checkbox"]').forEach(checkbox => {
+            const id = checkbox.id;
+            checkbox.checked = settings.containerToggles[id] !== undefined ? settings.containerToggles[id] : true;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+    }
+
+    // Reset to defaults
+    resetDefaultsButton.onclick = function() {
+        applySettings(defaultSettings);
+        saveSettings();
+    }
+
+    // Modify loadSettings function
+    function loadSettings() {
+        const savedSettings = localStorage.getItem('ezMonitorSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            applySettings(settings);
+        } else {
+            applySettings(defaultSettings);
+        }
+    }
 
     // Open the modal
     settingsButton.onclick = function() {
@@ -423,47 +484,69 @@ function initializeSettings() {
         }
     }
 
-    // Update column count
+    // Function to save settings
+    function saveSettings() {
+        const settings = {
+            columnCount: columnCountSlider.value,
+            scale: scaleSlider.value,
+            showHeader: showHeaderCheckbox.checked,
+            showGauges: showGaugesCheckbox.checked,
+            showDynamicInfo: showDynamicInfoCheckbox.checked,
+            showStaticInfo: showStaticInfoCheckbox.checked,
+            showCharts: showChartsCheckbox.checked,
+            containerToggles: {}
+        };
+
+        // Save container toggle states
+        document.querySelectorAll('#containerToggles input[type="checkbox"]').forEach(checkbox => {
+            settings.containerToggles[checkbox.id] = checkbox.checked;
+        });
+
+        localStorage.setItem('ezMonitorSettings', JSON.stringify(settings));
+    }
+
+    // Modify existing event listeners to save settings after change
     columnCountSlider.oninput = function() {
         const columnCount = this.value;
         columnCountValue.textContent = columnCount;
         document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+        saveSettings();
     }
 
-    // Toggle header visibility
     showHeaderCheckbox.onchange = function() {
         document.querySelector('.dashboard-header').style.display = this.checked ? 'block' : 'none';
+        saveSettings();
     }
 
-    // Toggle gauges visibility
     showGaugesCheckbox.onchange = function() {
         document.querySelectorAll('.progress-bar').forEach(el => {
             el.style.display = this.checked ? 'block' : 'none';
         });
+        saveSettings();
     }
 
-    // Toggle dynamic info boxes visibility
     showDynamicInfoCheckbox.onchange = function() {
         document.querySelectorAll('.disk-info-row').forEach(el => {
             el.style.display = this.checked ? 'flex' : 'none';
         });
+        saveSettings();
     }
 
-    // Toggle static info boxes visibility
     showStaticInfoCheckbox.onchange = function() {
         document.querySelectorAll('.info').forEach(el => {
             el.style.display = this.checked ? 'flex' : 'none';
         });
+        saveSettings();
     }
 
-    // Toggle charts visibility
     showChartsCheckbox.onchange = function() {
         document.querySelectorAll('.chart-container').forEach(el => {
             el.style.display = this.checked ? 'block' : 'none';
         });
+        saveSettings();
     }
 
-    // Create container toggles
+    // Modify createContainerToggles function
     function createContainerToggles() {
         const containers = document.querySelectorAll('.metric-container');
         containers.forEach((container, index) => {
@@ -482,42 +565,27 @@ function initializeSettings() {
             
             checkbox.onchange = function() {
                 container.style.display = this.checked ? 'flex' : 'none';
+                saveSettings();
             }
+
+            // Add default value to defaultSettings
+            defaultSettings.containerToggles[checkbox.id] = true;
         });
     }
 
-    createContainerToggles();
-    
-    // Set initial column count
-    columnCountSlider.value = '3';
-    columnCountSlider.dispatchEvent(new Event('input'));
-    
-    // Set initial visibility states
-    showHeaderCheckbox.checked = true;
-    showHeaderCheckbox.dispatchEvent(new Event('change'));
-    showGaugesCheckbox.checked = true;
-    showGaugesCheckbox.dispatchEvent(new Event('change'));
-    showDynamicInfoCheckbox.checked = true;
-    showDynamicInfoCheckbox.dispatchEvent(new Event('change'));
-    showStaticInfoCheckbox.checked = true;
-    showStaticInfoCheckbox.dispatchEvent(new Event('change'));
-    showChartsCheckbox.checked = true;
-    showChartsCheckbox.dispatchEvent(new Event('change'));
-
-    // Scale functionality
+    // Modify scale functionality
     scaleSlider.oninput = function() {
         const scale = this.value / 100;
         scaleValue.textContent = `${this.value}%`;
         document.querySelector('.scale-container').style.transform = `scale(${scale})`;
         document.querySelector('.scale-container').style.transformOrigin = 'top left';
-        // Adjust container size to prevent scrollbars
         document.querySelector('.scale-container').style.width = `${100 / scale}%`;
         document.querySelector('.scale-container').style.height = `${100 / scale}vh`;
+        saveSettings();
     }
 
-    // Set initial scale
-    scaleSlider.value = '100';
-    scaleSlider.dispatchEvent(new Event('input'));
+    createContainerToggles();
+    loadSettings(); // Load saved settings
 }
 
 // Modify the existing DOMContentLoaded event listener
