@@ -353,15 +353,34 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
 # Add this function to get top processes
 def get_top_processes(limit=10):
     processes = []
-    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'cpu_times', 'status', 'username']):
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'status', 'username']):
         try:
-            pinfo = proc.as_dict(attrs=['pid', 'name', 'cpu_percent', 'memory_percent', 'cpu_times', 'status', 'username'])
-            pinfo['cpu_time'] = sum(pinfo['cpu_times'])
-            pinfo['memory_mb'] = proc.memory_info().rss / (1024 * 1024)  # Convert to MB
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'cpu_percent', 'memory_percent', 'status', 'username'])
+            
+            # Get CPU usage
+            pinfo['cpu_percent'] = proc.cpu_percent(interval=0.1)
+            
+            # Get memory usage in MB
+            pinfo['memory_mb'] = proc.memory_info().rss / (1024 * 1024)
+            
+            # Get CPU time
+            cpu_times = proc.cpu_times()
+            pinfo['cpu_time'] = cpu_times.user + cpu_times.system
+            
             processes.append(pinfo)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
+    
+    # Sort processes by CPU usage
     processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
+    
+    # Normalize CPU percentages on Windows
+    if platform.system() == 'Windows':
+        total_cpu_percent = sum(p['cpu_percent'] for p in processes)
+        if total_cpu_percent > 0:
+            for p in processes:
+                p['cpu_percent'] = (p['cpu_percent'] / total_cpu_percent) * 100
+    
     return processes[:limit]
 
 # Flask Routes
