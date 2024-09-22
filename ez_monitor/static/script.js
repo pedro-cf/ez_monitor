@@ -630,7 +630,7 @@ function initializeSettings() {
         const containers = document.querySelectorAll('.metric-container');
         reorderContainer.innerHTML = '';
         containers.forEach((container) => {
-            const label = container.querySelector('.label').textContent.trim().split(' ')[0];
+            const label = container.querySelector('.label').childNodes[0].textContent.trim();
             const reorderItem = document.createElement('div');
             reorderItem.className = 'reorder-item';
             reorderItem.draggable = true;
