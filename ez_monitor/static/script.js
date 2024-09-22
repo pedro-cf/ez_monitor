@@ -83,8 +83,7 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
                 }
             },
             plugins: {
-                legend: { display: false },
-                
+                legend: { display: false }
             },
             animation: { duration: 0 }
         }
