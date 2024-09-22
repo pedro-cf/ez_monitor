@@ -16,6 +16,8 @@ import logging
 import docker
 import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import importlib
+import subprocess
 
 # Conditionally import Windows-specific modules
 if platform.system() == 'Windows':
@@ -239,7 +241,37 @@ def get_static_network_info():
     return interfaces
 
 # Add this function to get Docker container information
+def is_docker_available():
+    try:
+        importlib.import_module('docker')
+        return True
+    except ImportError:
+        return False
+
+def is_docker_running():
+    system = platform.system()
+    try:
+        if system == "Linux":
+            # Check if Docker daemon is running on Linux
+            subprocess.run(["docker", "info"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif system == "Windows":
+            # Check if Docker daemon is running on Windows
+            subprocess.run(["docker", "info"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
+        else:
+            logger.warning(f"Unsupported operating system: {system}")
+            return False
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
+        logger.warning("Docker command not found. Is Docker installed?")
+        return False
+
 def get_docker_containers(limit=10):
+    if not is_docker_running():
+        logger.info("Docker is not running")
+        return None
+
     try:
         client = docker.from_env()
         containers = client.containers.list(all=True)
@@ -253,6 +285,11 @@ def get_docker_containers(limit=10):
             try:
                 stats = container.stats(stream=False)
                 
+                # Check if stats is None or empty
+                if not stats:
+                    logger.warning(f"No stats available for container {container.id}")
+                    continue
+
                 # CPU usage calculation with fallback for Windows
                 cpu_percent = 0
                 try:
@@ -303,6 +340,8 @@ def get_docker_containers(limit=10):
                 })
             except Exception as e:
                 logger.error(f"Error processing container {container.id}: {e}")
+                logger.error(f"Container state: {container.attrs.get('State', 'Unknown')}")
+                logger.error(f"Container status: {container.status}")
         return container_info
     except docker.errors.DockerException as e:
         logger.warning(f"Docker is not available: {e}")
@@ -343,7 +382,7 @@ def update_metrics():
             ('disk_io', get_disk_io, 2),
             ('network', get_network_usage, 2),
             ('top_processes', get_top_processes, 5),
-            ('docker_containers', get_docker_containers, 10)
+            ('docker_containers', get_docker_containers if is_docker_available() else lambda: None, 10)
         ]:
             if metric not in last_metrics_update or (current_time - last_metrics_update.get(metric, 0)) >= interval:
                 metric_start = time.time()
