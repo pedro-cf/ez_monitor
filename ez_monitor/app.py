@@ -15,7 +15,7 @@ import requests
 import logging
 
 # Set up logging at the module level
-logging.basicConfig(level=logging.WARNING, format='%(levelname)s:%(name)s:%(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s | %(levelname)-6s | %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
