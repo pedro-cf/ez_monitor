@@ -282,7 +282,7 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
     return disk_io_speed, net_speed
 
 # Add this function to get top processes
-def get_top_processes(limit=5):
+def get_top_processes(limit=10):
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'cpu_times', 'status', 'username']):
         try:

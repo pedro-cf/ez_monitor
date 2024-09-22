@@ -18,14 +18,15 @@ body {
     margin-top: 20px;
 }
 .metric-container {
-    width: 100%; /* Take full width of grid cell */
-    min-width: 300px; /* Adjusted minimum width */
+    width: 100%;
+    min-width: 300px;
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 20px;
     box-sizing: border-box;
+    /* Remove the fixed height */
 }
 .progress-bar {
     position: relative;
@@ -175,6 +176,7 @@ body {
     position: relative;
     margin-top: 10px;
     min-height: 180px; /* Minimum height for charts */
+    height: 180px; /* Set a fixed height for charts */
 }
 
 canvas {
@@ -410,7 +412,10 @@ input[type="range"] {
 
 /* Add these styles at the end of the file */
 #topProcesses {
-    overflow-x: auto;  /* Add horizontal scroll for small screens */
+    overflow-y: auto; /* Add vertical scroll for processes */
+    flex: 1; /* Allow it to grow and fill the container */
+    margin-top: 10px; /* Add some space between the label and the table */
+    min-height: 300px; /* Increase the minimum height */
 }
 
 #topProcesses table {
