@@ -13,7 +13,13 @@ import argparse
 import socket
 import requests
 import logging
-import docker  # Add this import at the top of the file
+import docker
+import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import win32process
+import win32api
+import win32con
+import pywintypes
 
 # Set up logging at the module level
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s | %(levelname)-6s | %(message)s')
@@ -31,6 +37,15 @@ config = {
     'max_data_points': 1800
 }
 
+# Add this global variable to store the last update time
+last_update_time = None
+
+# Add this global variable
+last_metrics_update = {}
+
+# Add this global variable to store metric durations
+metric_durations = {}
+
 # CPU Information
 @lru_cache(maxsize=1)
 def get_static_cpu_info():
@@ -42,13 +57,13 @@ def get_static_cpu_info():
 
 def get_cpu_info():
     static_info = get_static_cpu_info()
-    cpu_times_percent = psutil.cpu_times_percent()
+    cpu_times_percent = psutil.cpu_times_percent(interval=None)
     dynamic_info = {
-        'usage': psutil.cpu_percent(interval=0.1),
+        'usage': psutil.cpu_percent(interval=None),
         'frequency': f"{psutil.cpu_freq().current:.0f} MHz",
         'tasks': len(psutil.pids()),
         'threads': psutil.cpu_count(logical=True),
-        'running': len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING]),
+        'running': sum(1 for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING),
         'load_average': get_load_average(),
         'user': cpu_times_percent.user,
         'system': cpu_times_percent.system,
@@ -79,7 +94,6 @@ def get_memory_info():
         'swap_percent': swap.percent
     }
     
-    # Add cached and buffers if available (Unix-like systems)
     if hasattr(mem, 'cached'):
         memory_info['cached'] = f"{mem.cached / (1024 ** 3):.2f}"
     if hasattr(mem, 'buffers'):
@@ -284,52 +298,126 @@ def get_docker_containers(limit=10):
 
 # Metrics Update
 def update_metrics():
-    global metrics
+    global metrics, last_update_time, last_metrics_update, metric_durations
     last_disk_io = get_disk_io()
     last_net_usage = get_network_usage()
     last_time = time.time()
 
-    # Calculate static information only once
     static_network_info = get_static_network_info()
     static_disk_info = get_static_disk_info()
     static_cpu_info = get_static_cpu_info()
 
     while True:
-        current_time = time.time()
+        start_time = time.time()
+        current_time = start_time
         elapsed = current_time - last_time
 
-        current_disk_io = get_disk_io()
-        current_net_usage = get_network_usage()
+        new_metrics = {}
+        new_durations = {}
 
-        disk_io_speed, net_speed = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed)
-        
-        # Add the filesystem information to disk_io_speed
-        disk_io_speed['filesystem'] = current_disk_io.get('filesystem', 'Unknown')
+        # Update CPU metrics (every cycle)
+        cpu_start = time.time()
+        new_metrics['cpu'] = {**static_cpu_info, **get_cpu_info()}
+        new_durations['cpu'] = time.time() - cpu_start
 
-        logger.debug(f"Current disk I/O: {current_disk_io}")
-        logger.debug(f"Calculated disk I/O speed: {disk_io_speed}")
+        # Update other metrics less frequently on Windows
+        if platform.system() == 'Windows':
+            if 'memory' not in last_metrics_update or (current_time - last_metrics_update.get('memory', 0)) >= 5:
+                memory_start = time.time()
+                new_metrics['memory'] = get_memory_info()
+                new_durations['memory'] = time.time() - memory_start
+                last_metrics_update['memory'] = current_time
 
-        new_metrics = {
-            'cpu': {**static_cpu_info, **get_cpu_info()},
-            'memory': get_memory_info(),
-            'disk': {
+            if 'disk' not in last_metrics_update or (current_time - last_metrics_update.get('disk', 0)) >= 10:
+                disk_start = time.time()
+                new_metrics['disk'] = {
+                    mountpoint: {**static_disk_info.get(mountpoint, {}), **get_disk_info(mountpoint)}
+                    for mountpoint in static_disk_info
+                }
+                new_durations['disk'] = time.time() - disk_start
+                last_metrics_update['disk'] = current_time
+
+            if 'gpu' not in last_metrics_update or (current_time - last_metrics_update.get('gpu', 0)) >= 5:
+                gpu_start = time.time()
+                new_metrics['gpu'] = get_gpu_info()
+                new_durations['gpu'] = time.time() - gpu_start
+                last_metrics_update['gpu'] = current_time
+
+            if 'disk_io' not in last_metrics_update or (current_time - last_metrics_update.get('disk_io', 0)) >= 2:
+                disk_io_start = time.time()
+                current_disk_io = get_disk_io()
+                disk_io_speed, _ = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, last_net_usage, elapsed)
+                disk_io_speed['filesystem'] = current_disk_io.get('filesystem', 'Unknown')
+                new_metrics['disk_io'] = disk_io_speed
+                new_durations['disk_io'] = time.time() - disk_io_start
+                last_disk_io = current_disk_io
+                last_metrics_update['disk_io'] = current_time
+
+            if 'network' not in last_metrics_update or (current_time - last_metrics_update.get('network', 0)) >= 2:
+                network_start = time.time()
+                current_net_usage = get_network_usage()
+                _, net_speed = calculate_speeds(last_disk_io, last_disk_io, last_net_usage, current_net_usage, elapsed)
+                new_metrics['network'] = {**net_speed, 'static_info': static_network_info}
+                new_durations['network'] = time.time() - network_start
+                last_net_usage = current_net_usage
+                last_metrics_update['network'] = current_time
+
+            if 'top_processes' not in last_metrics_update or (current_time - last_metrics_update.get('top_processes', 0)) >= 5:
+                top_processes_start = time.time()
+                new_metrics['top_processes'] = get_top_processes()
+                new_durations['top_processes'] = time.time() - top_processes_start
+                last_metrics_update['top_processes'] = current_time
+
+            if 'docker_containers' not in last_metrics_update or (current_time - last_metrics_update.get('docker_containers', 0)) >= 10:
+                docker_start = time.time()
+                new_metrics['docker_containers'] = get_docker_containers()
+                new_durations['docker_containers'] = time.time() - docker_start
+                last_metrics_update['docker_containers'] = current_time
+        else:
+            # For non-Windows systems, update all metrics every cycle
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_metric = {
+                    executor.submit(get_cpu_info): 'cpu',
+                    executor.submit(get_memory_info): 'memory',
+                    executor.submit(get_gpu_info): 'gpu',
+                    executor.submit(get_disk_io): 'disk_io',
+                    executor.submit(get_network_usage): 'network',
+                    executor.submit(get_top_processes): 'top_processes',
+                    executor.submit(get_docker_containers): 'docker_containers'
+                }
+
+                for future in as_completed(future_to_metric):
+                    metric_name = future_to_metric[future]
+                    try:
+                        new_metrics[metric_name] = future.result()
+                    except Exception as exc:
+                        logger.error(f'{metric_name} generated an exception: {exc}')
+
+            # Process disk_io and network metrics
+            current_disk_io = new_metrics['disk_io']
+            current_net_usage = new_metrics['network']
+            disk_io_speed, net_speed = calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed)
+            new_metrics['disk_io'] = {**disk_io_speed, 'filesystem': current_disk_io.get('filesystem', 'Unknown')}
+            new_metrics['network'] = {**net_speed, 'static_info': static_network_info}
+
+            # Update disk info
+            new_metrics['disk'] = {
                 mountpoint: {**static_disk_info.get(mountpoint, {}), **get_disk_info(mountpoint)}
                 for mountpoint in static_disk_info
-            },
-            'gpu': get_gpu_info(),
-            'disk_io': disk_io_speed,
-            'network': {**net_speed, 'static_info': static_network_info},
-            'top_processes': get_top_processes(),
-            'docker_containers': get_docker_containers(),  # Add this line
-        }
+            }
+
         with metrics_lock:
             metrics.update(new_metrics)
+            metric_durations.update(new_durations)
+            last_update_time = datetime.datetime.now()
 
         last_disk_io = current_disk_io
         last_net_usage = current_net_usage
         last_time = current_time
 
-        time.sleep(config['refresh_rate'])
+        end_time = time.time()
+        sleep_time = max(0, config['refresh_rate'] - (end_time - start_time))
+        time.sleep(sleep_time)
 
 def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed):
     if elapsed > 0:
@@ -353,34 +441,35 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
 # Add this function to get top processes
 def get_top_processes(limit=10):
     processes = []
-    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'status', 'username']):
-        try:
-            pinfo = proc.as_dict(attrs=['pid', 'name', 'cpu_percent', 'memory_percent', 'status', 'username'])
-            
-            # Get CPU usage
-            pinfo['cpu_percent'] = proc.cpu_percent(interval=0.1)
-            
-            # Get memory usage in MB
-            pinfo['memory_mb'] = proc.memory_info().rss / (1024 * 1024)
-            
-            # Get CPU time
-            cpu_times = proc.cpu_times()
-            pinfo['cpu_time'] = cpu_times.user + cpu_times.system
-            
-            processes.append(pinfo)
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
-    
+    try:
+        for proc in psutil.process_iter(['pid', 'name', 'status', 'username', 'cpu_percent', 'memory_percent']):
+            try:
+                pinfo = proc.as_dict(attrs=['pid', 'name', 'status', 'username', 'cpu_percent', 'memory_percent'])
+                
+                # Get memory usage
+                mem_info = proc.memory_info()
+                pinfo['memory_mb'] = mem_info.rss / (1024 * 1024)
+                
+                # Get CPU time
+                cpu_times = proc.cpu_times()
+                pinfo['cpu_time'] = cpu_times.user + cpu_times.system
+                
+                processes.append(pinfo)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+    except Exception as e:
+        logger.error(f"Error in get_top_processes: {e}")
+        return []
+
     # Sort processes by CPU usage
     processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
     
-    # Normalize CPU percentages on Windows
-    if platform.system() == 'Windows':
-        total_cpu_percent = sum(p['cpu_percent'] for p in processes)
-        if total_cpu_percent > 0:
-            for p in processes:
-                p['cpu_percent'] = (p['cpu_percent'] / total_cpu_percent) * 100
-    
+    # Normalize CPU percentages
+    total_cpu_percent = sum(p['cpu_percent'] for p in processes)
+    if total_cpu_percent > 0:
+        for p in processes:
+            p['cpu_percent'] = (p['cpu_percent'] / total_cpu_percent) * 100
+
     return processes[:limit]
 
 # Flask Routes
@@ -409,6 +498,13 @@ def get_metrics():
             'top_processes': metrics.get('top_processes', []),
             'docker_containers': metrics.get('docker_containers'),
         }
+        
+        # Add last update timestamp and metric durations if in debug mode
+        if app.debug:
+            if last_update_time:
+                response['last_update'] = last_update_time.isoformat()
+            response['metric_durations'] = {k: f"{v:.6f}" for k, v in metric_durations.items()}
+
     logger.debug(f"Metrics response: {response}")
     return jsonify(response)
 

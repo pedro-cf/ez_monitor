@@ -26,6 +26,7 @@ setup(
         "py-cpuinfo==9.0.0",
         "GPUtil==1.4.0",
         "requests==2.26.0",
+        "pywin32==301; platform_system=='Windows'",
     ],
     entry_points={
         "console_scripts": [
