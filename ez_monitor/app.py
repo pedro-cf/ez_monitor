@@ -55,7 +55,7 @@ def get_load_average():
     if hasattr(os, 'getloadavg'):
         load_avg = os.getloadavg()
         return f"{load_avg[0]:.2f}, {load_avg[1]:.2f}, {load_avg[2]:.2f}"
-    return "N/A (Windows)"
+    return "N/A"
 
 # Memory Information
 def get_memory_info():
