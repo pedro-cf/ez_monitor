@@ -669,7 +669,15 @@ function initializeSettings() {
             const labelElement = document.createElement('label');
             labelElement.htmlFor = checkbox.id;
             labelElement.appendChild(checkbox);
-            labelElement.appendChild(document.createTextNode(` Show ${label}`));
+            
+            // Update the label text for Top Processes and Docker Containers
+            if (label === 'Top') {
+                labelElement.appendChild(document.createTextNode(' Show Top Processes'));
+            } else if (label === 'Docker') {
+                labelElement.appendChild(document.createTextNode(' Show Docker Containers'));
+            } else {
+                labelElement.appendChild(document.createTextNode(` Show ${label}`));
+            }
             
             containerToggles.appendChild(labelElement);
             
