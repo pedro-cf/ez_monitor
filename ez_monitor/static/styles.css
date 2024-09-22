@@ -19,7 +19,6 @@ body {
 .metric-container {
     width: 100%; /* Take full width of grid cell */
     min-width: 300px; /* Adjusted minimum width */
-    height: auto; /* Change from fixed height to auto */
     display: flex;
     flex-direction: column;
     background-color: rgba(255, 255, 255, 0.1);
@@ -72,10 +71,10 @@ body {
     border-radius: 5px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Changed from space-between */
-    height: auto; /* Change from fixed height to auto */
-    min-height: 70px; /* Set a minimum height instead */
-    overflow-y: visible; /* Change from auto to visible */
+    justify-content: flex-start;
+    flex: 0 0 auto; /* Don't grow, don't shrink, size based on content */
+    min-height: 90px; /* Minimum height instead of fixed height */
+    overflow: hidden;
 }
 .value-box {
     display: inline-block;
@@ -149,20 +148,19 @@ body {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    align-items: center; /* Changed from flex-start to center */
+    align-items: flex-start; /* Changed from center to flex-start */
     gap: 5px;
     margin-bottom: 5px;
-    height: auto; /* Change from fixed height to auto */
-    min-height: 30px; /* Set a minimum height */
-    overflow-y: visible; /* Change from auto to visible */
+    flex: 0 0 auto; /* Don't grow, don't shrink, size based on content */
+    min-height: 60px; /* Minimum height instead of fixed height */
+    overflow: hidden; /* Hide scrollbars */
 }
 
 .chart-container {
-    flex-grow: 1;
+    flex: 1 1 auto; /* Grow and shrink as needed, initial size based on content */
     position: relative;
     margin-top: 10px;
-    height: 180px; /* Set a fixed height for charts */
-    min-height: 150px;
+    min-height: 180px; /* Minimum height for charts */
 }
 
 canvas {
@@ -337,4 +335,15 @@ input[type="range"] {
 .disk-space-value-box {
     flex: 1;
     max-width: calc(50% - 5px); /* Adjust the 5px if needed to match your gap */
+}
+
+/* Add these new styles at the end of the file */
+.metric-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-container {
+    flex-grow: 1;
+    min-height: 180px; /* Set a minimum height for charts */
 }

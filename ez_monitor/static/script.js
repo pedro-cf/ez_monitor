@@ -372,6 +372,7 @@ function updateMetrics() {
             updateGPUMetric(data.gpu);
             updateDiskIOMetric(data.disk_io);
             updateNetworkMetric(data.network);
+            initializeScrollBehavior(); // Add this line
         })
         .catch(error => {
             console.error('Error fetching metrics:', error);
