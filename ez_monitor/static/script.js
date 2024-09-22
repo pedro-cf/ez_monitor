@@ -398,6 +398,10 @@ function initializeSettings() {
     const columnCountSlider = document.getElementById('columnCount');
     const columnCountValue = document.getElementById('columnCountValue');
     const showHeaderCheckbox = document.getElementById('showHeader');
+    const showGaugesCheckbox = document.getElementById('showGauges');
+    const showDynamicInfoCheckbox = document.getElementById('showDynamicInfo');
+    const showStaticInfoCheckbox = document.getElementById('showStaticInfo');
+    const showChartsCheckbox = document.getElementById('showCharts');
     const containerToggles = document.getElementById('containerToggles');
 
     // Open the modal
@@ -429,6 +433,34 @@ function initializeSettings() {
         document.querySelector('.dashboard-header').style.display = this.checked ? 'block' : 'none';
     }
 
+    // Toggle gauges visibility
+    showGaugesCheckbox.onchange = function() {
+        document.querySelectorAll('.progress-bar').forEach(el => {
+            el.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
+    // Toggle dynamic info boxes visibility
+    showDynamicInfoCheckbox.onchange = function() {
+        document.querySelectorAll('.disk-info-row').forEach(el => {
+            el.style.display = this.checked ? 'flex' : 'none';
+        });
+    }
+
+    // Toggle static info boxes visibility
+    showStaticInfoCheckbox.onchange = function() {
+        document.querySelectorAll('.info').forEach(el => {
+            el.style.display = this.checked ? 'flex' : 'none';
+        });
+    }
+
+    // Toggle charts visibility
+    showChartsCheckbox.onchange = function() {
+        document.querySelectorAll('.chart-container').forEach(el => {
+            el.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
     // Create container toggles
     function createContainerToggles() {
         const containers = document.querySelectorAll('.metric-container');
@@ -458,9 +490,17 @@ function initializeSettings() {
     columnCountSlider.value = '3';
     columnCountSlider.dispatchEvent(new Event('input'));
     
-    // Set initial header visibility
+    // Set initial visibility states
     showHeaderCheckbox.checked = true;
     showHeaderCheckbox.dispatchEvent(new Event('change'));
+    showGaugesCheckbox.checked = true;
+    showGaugesCheckbox.dispatchEvent(new Event('change'));
+    showDynamicInfoCheckbox.checked = true;
+    showDynamicInfoCheckbox.dispatchEvent(new Event('change'));
+    showStaticInfoCheckbox.checked = true;
+    showStaticInfoCheckbox.dispatchEvent(new Event('change'));
+    showChartsCheckbox.checked = true;
+    showChartsCheckbox.dispatchEvent(new Event('change'));
 }
 
 // Modify the existing DOMContentLoaded event listener
