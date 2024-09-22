@@ -66,8 +66,9 @@ This will run ez_monitor on port 8080, with a refresh rate of 1.5 seconds, keep 
 - Scalable interface: Use the scale slider in the settings to resize the entire dashboard, making it easier to fit on different screen sizes
 - Persistent settings: Your layout and display preferences are saved and persisted between sessions
 
-### New Features
+## Requirements
 
+ez_monitor requires Python 3.7 or higher. All other dependencies will be automatically installed when you install ez_monitor using pip.
 - **Top Processes**: View a list of the top processes consuming system resources, including CPU usage, memory usage, and process status.
 - **Docker Containers**: If Docker is available on your system, ez_monitor now displays information about running containers, including resource usage and status.
 - **Customizable Layout**: Adjust the number of columns in the dashboard layout to best fit your screen.
