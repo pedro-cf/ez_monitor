@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="ez_monitor",
-    version="0.1.0",
+    version="0.2.0",
     author="Pedro Fernandes",
     author_email="your.email@example.com",
     description="A lightweight system metrics visualization tool",
