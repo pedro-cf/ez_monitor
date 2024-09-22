@@ -511,6 +511,7 @@ function initializeSettings() {
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
     const resetDefaultsButton = document.getElementById('resetDefaults');
+    const reorderContainer = document.getElementById('reorderContainer');
 
     // Define default settings
     const defaultSettings = {
@@ -521,7 +522,8 @@ function initializeSettings() {
         showDynamicInfo: true,
         showStaticInfo: true,
         showCharts: true,
-        containerToggles: {}
+        containerToggles: {},
+        displayOrder: []
     };
 
     // Function to apply settings
@@ -553,6 +555,9 @@ function initializeSettings() {
             checkbox.checked = settings.containerToggles[id] !== undefined ? settings.containerToggles[id] : true;
             checkbox.dispatchEvent(new Event('change'));
         });
+
+        // Apply display order
+        applyDisplayOrder(settings.displayOrder);
     }
 
     // Reset to defaults
@@ -570,6 +575,8 @@ function initializeSettings() {
         } else {
             applySettings(defaultSettings);
         }
+        createReorderElements();
+        createContainerToggles();
     }
 
     // Open the modal
@@ -605,7 +612,9 @@ function initializeSettings() {
             showDynamicInfo: showDynamicInfoCheckbox.checked,
             showStaticInfo: showStaticInfoCheckbox.checked,
             showCharts: showChartsCheckbox.checked,
-            containerToggles: {}
+            containerToggles: {},
+            displayOrder: Array.from(document.querySelectorAll('.metric-container'))
+                .map(container => container.querySelector('.label').textContent.trim().split(' ')[0])
         };
 
         // Save container toggle states
@@ -657,53 +666,114 @@ function initializeSettings() {
         saveSettings();
     }
 
-    // Modify createContainerToggles function
-    function createContainerToggles() {
+    // Function to create reorder elements
+    function createReorderElements() {
         const containers = document.querySelectorAll('.metric-container');
+        reorderContainer.innerHTML = '';
         containers.forEach((container, index) => {
             const label = container.querySelector('.label').textContent.trim().split(' ')[0];
+            const reorderItem = document.createElement('div');
+            reorderItem.className = 'reorder-item';
+            reorderItem.draggable = true;
+            
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `toggle-${label.toLowerCase()}`;
-            checkbox.checked = true;
+            checkbox.checked = container.style.display !== 'none';
             
-            const labelElement = document.createElement('label');
-            labelElement.htmlFor = checkbox.id;
-            labelElement.appendChild(checkbox);
+            reorderItem.innerHTML = `
+                <span class="drag-handle">☰</span>
+                <label for="${checkbox.id}">
+                    <span>${label}</span>
+                </label>
+            `;
+            reorderItem.insertBefore(checkbox, reorderItem.firstChild);
             
-            // Update the label text for Top Processes and Docker Containers
-            if (label === 'Top') {
-                labelElement.appendChild(document.createTextNode(' Show Top Processes'));
-            } else if (label === 'Docker') {
-                labelElement.appendChild(document.createTextNode(' Show Docker Containers'));
-            } else {
-                labelElement.appendChild(document.createTextNode(` Show ${label}`));
-            }
-            
-            containerToggles.appendChild(labelElement);
-            
+            reorderContainer.appendChild(reorderItem);
+
             checkbox.onchange = function() {
                 container.style.display = this.checked ? 'flex' : 'none';
                 saveSettings();
             }
+        });
 
-            // Add default value to defaultSettings
-            defaultSettings.containerToggles[checkbox.id] = true;
+        // Add drag and drop event listeners
+        const reorderItems = reorderContainer.querySelectorAll('.reorder-item');
+        reorderItems.forEach(item => {
+            item.addEventListener('dragstart', dragStart);
+            item.addEventListener('dragover', dragOver);
+            item.addEventListener('drop', drop);
+            item.addEventListener('dragenter', dragEnter);
+            item.addEventListener('dragleave', dragLeave);
         });
     }
 
-    // Modify scale functionality
-    scaleSlider.oninput = function() {
-        const scale = this.value / 100;
-        scaleValue.textContent = `${this.value}%`;
-        document.querySelector('.scale-container').style.transform = `scale(${scale})`;
-        document.querySelector('.scale-container').style.transformOrigin = 'top left';
-        document.querySelector('.scale-container').style.width = `${100 / scale}%`;
-        document.querySelector('.scale-container').style.height = `${100 / scale}vh`;
-        saveSettings();
+    // Drag and drop functions
+    let draggedItem = null;
+
+    function dragStart() {
+        draggedItem = this;
+        setTimeout(() => this.style.opacity = '0.5', 0);
     }
 
-    createContainerToggles();
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    function dragEnter(e) {
+        e.preventDefault();
+        this.classList.add('over');
+    }
+
+    function dragLeave() {
+        this.classList.remove('over');
+    }
+
+    function drop() {
+        this.classList.remove('over');
+        if (this !== draggedItem) {
+            const allItems = [...reorderContainer.querySelectorAll('.reorder-item')];
+            const draggedIndex = allItems.indexOf(draggedItem);
+            const droppedIndex = allItems.indexOf(this);
+
+            if (draggedIndex < droppedIndex) {
+                reorderContainer.insertBefore(draggedItem, this.nextSibling);
+            } else {
+                reorderContainer.insertBefore(draggedItem, this);
+            }
+
+            // Update the actual metric containers order
+            const dashboard = document.querySelector('.dashboard');
+            const containers = Array.from(dashboard.querySelectorAll('.metric-container'));
+            if (draggedIndex < droppedIndex) {
+                dashboard.insertBefore(containers[draggedIndex], containers[droppedIndex].nextSibling);
+            } else {
+                dashboard.insertBefore(containers[draggedIndex], containers[droppedIndex]);
+            }
+
+            createContainerToggles(); // Recreate container toggles to match new order
+            saveSettings(); // Save the new order
+        }
+        draggedItem.style.opacity = '1';
+        draggedItem = null;
+    }
+
+    // Function to apply display order
+    function applyDisplayOrder(order) {
+        const dashboard = document.querySelector('.dashboard');
+        const containers = Array.from(document.querySelectorAll('.metric-container'));
+        
+        order.forEach((item) => {
+            const container = containers.find(c => c.querySelector('.label').textContent.trim().startsWith(item.label));
+            if (container) {
+                dashboard.appendChild(container);
+                container.style.display = item.visible ? 'flex' : 'none';
+            }
+        });
+        createReorderElements(); // Recreate reorder elements to match new order
+    }
+
+    createReorderElements();
     loadSettings(); // Load saved settings
 }
 
@@ -729,6 +799,7 @@ function handleCursorVisibility() {
     }
 }
 
+
 // Add this event listener at the end of your script
 document.addEventListener('mousemove', handleCursorVisibility);
 
@@ -739,5 +810,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSettings();  // Add this line to initialize settings
     handleCursorVisibility(); // Add this line to initialize cursor visibility
 });
+
 
 // Remove any duplicate event listeners if they exist
