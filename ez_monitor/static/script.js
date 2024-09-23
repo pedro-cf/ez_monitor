@@ -742,6 +742,66 @@ function initializeSettings() {
         document.querySelector('.dashboard').style.gridTemplateColumns = `repeat(${defaultSettings.columnCount}, 1fr)`;
     }
 
+    // Add these new functions
+    function toggleHeader() {
+        const header = document.querySelector('.dashboard-header');
+        header.style.display = showHeaderCheckbox.checked ? 'block' : 'none';
+    }
+
+    function toggleGauges() {
+        const gauges = document.querySelectorAll('.progress-bar');
+        gauges.forEach(gauge => {
+            gauge.style.display = showGaugesCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    function toggleDynamicInfo() {
+        const dynamicInfos = document.querySelectorAll('.disk-info-row');
+        dynamicInfos.forEach(info => {
+            info.style.display = showDynamicInfoCheckbox.checked ? 'flex' : 'none';
+        });
+    }
+
+    function toggleStaticInfo() {
+        const staticInfos = document.querySelectorAll('.info');
+        staticInfos.forEach(info => {
+            info.style.display = showStaticInfoCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    function toggleCharts() {
+        const charts = document.querySelectorAll('.chart-container');
+        charts.forEach(chart => {
+            chart.style.display = showChartsCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    // Add event listeners for the checkboxes
+    showHeaderCheckbox.addEventListener('change', () => {
+        toggleHeader();
+        saveSettings();
+    });
+
+    showGaugesCheckbox.addEventListener('change', () => {
+        toggleGauges();
+        saveSettings();
+    });
+
+    showDynamicInfoCheckbox.addEventListener('change', () => {
+        toggleDynamicInfo();
+        saveSettings();
+    });
+
+    showStaticInfoCheckbox.addEventListener('change', () => {
+        toggleStaticInfo();
+        saveSettings();
+    });
+
+    showChartsCheckbox.addEventListener('change', () => {
+        toggleCharts();
+        saveSettings();
+    });
+
     // Add event listeners for settings controls
     columnCountSlider.addEventListener('input', function() {
         columnCountValue.textContent = this.value;
@@ -753,41 +813,6 @@ function initializeSettings() {
         const scale = this.value / 100;
         scaleValue.textContent = this.value + '%';
         document.querySelector('.scale-container').style.transform = `scale(${scale})`;
-        saveSettings();
-    });
-
-    showHeaderCheckbox.addEventListener('change', function() {
-        document.querySelectorAll('.header').forEach(header => {
-            header.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    });
-
-    showGaugesCheckbox.addEventListener('change', function() {
-        document.querySelectorAll('.gauge').forEach(gauge => {
-            gauge.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    });
-
-    showDynamicInfoCheckbox.addEventListener('change', function() {
-        document.querySelectorAll('.dynamic-info').forEach(info => {
-            info.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    });
-
-    showStaticInfoCheckbox.addEventListener('change', function() {
-        document.querySelectorAll('.static-info').forEach(info => {
-            info.style.display = this.checked ? 'block' : 'none';
-        });
-        saveSettings();
-    });
-
-    showChartsCheckbox.addEventListener('change', function() {
-        document.querySelectorAll('.chart-container').forEach(chart => {
-            chart.style.display = this.checked ? 'block' : 'none';
-        });
         saveSettings();
     });
 
