@@ -488,11 +488,13 @@ def index():
     disks = psutil.disk_partitions()
     hostname = socket.gethostname()
     try:
-        ip_address = socket.gethostbyname(hostname)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
     except:
-        ip_address = "Unable to retrieve"
+        local_ip = "Unable to retrieve"
     
-    return render_template('index.html', disks=[p.mountpoint for p in disks], hostname=hostname, ip_address=ip_address)
+    return render_template('index.html', disks=[p.mountpoint for p in disks], hostname=hostname, ip_address=local_ip)
 
 @app.route('/metrics')
 def get_metrics():
