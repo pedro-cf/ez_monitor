@@ -363,18 +363,17 @@ function updateNetworkMetric(network) {
 // Update the updateTopProcesses function
 function updateTopProcesses(processes) {
     const topProcessesElement = document.getElementById('topProcesses');
-    let html = '<table><tr><th>PID</th><th>Name</th><th>Status</th><th>CPU %</th><th>MEM %</th><th>MEM (MB)</th><th>CPU Time</th><th>User</th></tr>';
+    let html = '<table><tr><th>PID</th><th>Name</th><th>CPU %</th><th>MEM %</th><th>MEM (MB)</th><th>CPU Time</th><th>Status</th></tr>';
     processes.forEach(proc => {
         const statusClass = getProcessStatusClass(proc.status);
         html += `<tr>
-            <td>${proc.pid}</td>
-            <td>${proc.name}</td>
-            <td><span class="status-dot ${statusClass}"></span>${proc.status}</td>
-            <td>${proc.cpu_percent.toFixed(1)}%</td>
-            <td>${proc.memory_percent.toFixed(1)}%</td>
-            <td>${proc.memory_mb.toFixed(1)}</td>
-            <td>${proc.cpu_time.toFixed(2)}s</td>
-            <td>${proc.username}</td>
+            <td title="${proc.pid}">${proc.pid}</td>
+            <td title="${proc.name}">${proc.name}</td>
+            <td title="${proc.cpu_percent.toFixed(1)}%">${proc.cpu_percent.toFixed(1)}%</td>
+            <td title="${proc.memory_percent.toFixed(1)}%">${proc.memory_percent.toFixed(1)}%</td>
+            <td title="${proc.memory_mb.toFixed(1)}">${proc.memory_mb.toFixed(1)}</td>
+            <td title="${proc.cpu_time.toFixed(2)}s">${proc.cpu_time.toFixed(2)}s</td>
+            <td title="${proc.status}"><span class="status-dot ${statusClass}"></span>${proc.status}</td>
         </tr>`;
     });
     html += '</table>';
@@ -409,24 +408,22 @@ function getProcessStatusClass(status) {
 // Update the updateDockerContainers function
 function updateDockerContainers(containers) {
     const dockerContainersElement = document.getElementById('dockerContainers');
-    let html = '<table><tr><th>ID</th><th>Name</th><th>Status</th><th>CPU %</th><th>MEM %</th><th>MEM Usage</th><th>NET I/O</th><th>BLOCK I/O</th></tr>';
+    let html = '<table><tr><th>ID</th><th>Name</th><th>CPU %</th><th>MEM %</th><th>MEM Usage</th><th>Status</th></tr>';
     
     if (containers === null) {
-        html += '<tr><td colspan="8">Docker is not available on this system.</td></tr>';
+        html += '<tr><td colspan="6">Docker is not available on this system.</td></tr>';
     } else if (containers.length === 0) {
-        html += '<tr><td colspan="8">No Docker containers found.</td></tr>';
+        html += '<tr><td colspan="6">No Docker containers found.</td></tr>';
     } else {
         containers.forEach(container => {
             const statusClass = getStatusClass(container.status);
             html += `<tr>
                 <td title="${container.id}">${container.short_id}</td>
-                <td>${container.name}</td>
-                <td><span class="status-dot ${statusClass}"></span>${container.status}</td>
-                <td>${container.cpu_percent.toFixed(2)}%</td>
-                <td>${container.mem_percent.toFixed(2)}%</td>
-                <td>${container.mem_usage} / ${container.mem_limit}</td>
-                <td>${container.net_io}</td>
-                <td>${container.block_io}</td>
+                <td title="${container.name}">${container.name}</td>
+                <td title="${container.cpu_percent.toFixed(2)}%">${container.cpu_percent.toFixed(2)}%</td>
+                <td title="${container.mem_percent.toFixed(2)}%">${container.mem_percent.toFixed(2)}%</td>
+                <td title="${container.mem_usage}">${container.mem_usage}</td>
+                <td title="${container.status}"><span class="status-dot ${statusClass}"></span>${container.status}</td>
             </tr>`;
         });
     }
