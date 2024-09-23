@@ -48,8 +48,8 @@ last_update_time = None
 # Add this global variable
 last_metrics_update = {}
 
-# Add this global variable to store metric durations
-metric_durations = {}
+# Add this global variable to store metric collection times
+metric_collection_times = {}
 
 # CPU Information
 @lru_cache(maxsize=1)
@@ -362,7 +362,7 @@ def get_docker_containers(limit=10):
 
 # Metrics Update
 def update_metrics():
-    global metrics, last_update_time, last_metrics_update, metric_durations
+    global metrics, last_update_time, last_metrics_update, metric_collection_times
     last_disk_io = get_disk_io()
     last_net_usage = get_network_usage()
     last_time = time.time()
@@ -377,12 +377,12 @@ def update_metrics():
         elapsed = current_time - last_time
 
         new_metrics = {}
-        new_durations = {}
+        new_collection_times = {}
 
         # Update CPU metrics (every cycle)
         cpu_start = time.time()
         new_metrics['cpu'] = {**static_cpu_info, **get_cpu_info()}
-        new_durations['cpu'] = time.time() - cpu_start
+        new_collection_times['cpu'] = time.time() - cpu_start
 
         # Update other metrics
         for metric, func, interval in [
@@ -397,7 +397,7 @@ def update_metrics():
             if metric not in last_metrics_update or (current_time - last_metrics_update.get(metric, 0)) >= interval:
                 metric_start = time.time()
                 new_metrics[metric] = func()
-                new_durations[metric] = time.time() - metric_start
+                new_collection_times[metric] = time.time() - metric_start
                 last_metrics_update[metric] = current_time
 
         # Process disk_io and network metrics
@@ -412,7 +412,7 @@ def update_metrics():
 
         with metrics_lock:
             metrics.update(new_metrics)
-            metric_durations.update(new_durations)
+            metric_collection_times.update(new_collection_times)
             last_update_time = datetime.datetime.now()
 
         last_time = current_time
@@ -511,11 +511,10 @@ def get_metrics():
             'docker_containers': metrics.get('docker_containers'),
         }
         
-        # Add last update timestamp and metric durations if in debug mode
-        if app.debug:
-            if last_update_time:
-                response['last_update'] = last_update_time.isoformat()
-            response['metric_durations'] = {k: f"{v:.6f}" for k, v in metric_durations.items()}
+        # Always include last update timestamp and metric collection times
+        if last_update_time:
+            response['last_update'] = last_update_time.isoformat()
+        response['metric_collection_times'] = {k: f"{v:.6f}" for k, v in metric_collection_times.items()}
 
     logger.debug(f"Metrics response: {response}")
     return jsonify(response)
