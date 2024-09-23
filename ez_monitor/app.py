@@ -178,7 +178,6 @@ def get_disk_io():
             }
         else:  # Linux and other Unix-like systems
             io_counters = psutil.disk_io_counters(perdisk=True)
-            logger.debug(f"Linux disk I/O (per disk): {io_counters}")
             disk_info = {
                 'read_bytes': sum(disk.read_bytes for disk in io_counters.values()),
                 'write_bytes': sum(disk.write_bytes for disk in io_counters.values()),
@@ -419,6 +418,7 @@ def update_metrics():
 
         end_time = time.time()
         sleep_time = max(0, config['refresh_rate'] - (end_time - start_time))
+
         time.sleep(sleep_time)
 
 def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_usage, elapsed):
@@ -434,9 +434,6 @@ def calculate_speeds(last_disk_io, current_disk_io, last_net_usage, current_net_
     else:
         disk_io_speed = {'read_speed': 0, 'write_speed': 0}
         net_speed = {'upload_speed': 0, 'download_speed': 0}
-    
-    logger.debug(f"Calculated disk I/O speeds: {disk_io_speed}")
-    logger.debug(f"Calculated network speeds: {net_speed}")
     
     return disk_io_speed, net_speed
 
@@ -516,14 +513,13 @@ def get_metrics():
             response['last_update'] = last_update_time.isoformat()
         response['metric_collection_times'] = {k: f"{v:.6f}" for k, v in metric_collection_times.items()}
 
-    logger.debug(f"Metrics response: {response}")
     return jsonify(response)
 
 # Command-line argument parsing
 def parse_arguments():
     parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
     parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
-    parser.add_argument('-r', '--refresh-rate', type=float, default=0.5, help='Refresh rate in seconds')
+    parser.add_argument('-r', '--refresh-rate', type=float, default=2, help='Refresh rate in seconds')
     parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
     parser.add_argument('--debug', action='store_true', help='Run in debug mode')
     return parser.parse_args()
