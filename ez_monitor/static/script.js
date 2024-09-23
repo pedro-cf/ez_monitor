@@ -600,6 +600,8 @@ function initializeSettings() {
         } else {
             applySettings(defaultSettings);
         }
+        // Immediately save settings after loading
+        saveSettings();
     }
 
     // Open the modal
