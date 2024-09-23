@@ -348,7 +348,7 @@ def get_docker_containers(limit=10):
                 })
             except Exception as e:
                 import traceback
-                traceback.print_exc()
+                traceback.logging.info_exc()
                 logger.error(f"Error processing container {container.id}: {e}")
                 logger.error(f"Container state: {container.attrs.get('State', 'Unknown')}")
                 logger.error(f"Container status: {container.status}")
@@ -535,11 +535,11 @@ def main():
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    print(f"Starting ez_monitor with the following configuration:")
-    print(f"Port: {args.port}")
-    print(f"Refresh rate: {args.refresh_rate} seconds")
-    print(f"Max data points: {args.max_data_points}")
-    print(f"Debug mode: {'On' if args.debug else 'Off'}")
+    logging.info(f"Starting ez_monitor with the following configuration:")
+    logging.info(f"Port: {args.port}")
+    logging.info(f"Refresh rate: {args.refresh_rate} seconds")
+    logging.info(f"Max data points: {args.max_data_points}")
+    logging.info(f"Debug mode: {'On' if args.debug else 'Off'}")
     
     # Update global configuration
     config['refresh_rate'] = args.refresh_rate
