@@ -27,6 +27,7 @@ setup(
         "GPUtil==1.4.0",
         "requests==2.26.0",
         "pywin32==301; platform_system=='Windows'",
+        "docker==7.1.0",
     ],
     extras_require={
         'windows': ["pywin32==301"],
