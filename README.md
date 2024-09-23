@@ -7,22 +7,9 @@
 
 ## Installation
 
-Since ez_monitor is not yet published on PyPI, you'll need to install it from the source. Follow these steps:
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/pedro-cf/ez_monitor.git
-   ```
-
-2. Change to the ez_monitor directory:
-   ```
-   cd ez_monitor
-   ```
-
-3. Install the package:
-   ```
-   pip install .
-   ```
+```
+pip install git+https://github.com/pedro-cf/ez_monitor.git
+```
 
 ## Usage
 
