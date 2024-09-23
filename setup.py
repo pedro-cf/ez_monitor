@@ -16,6 +16,7 @@ setup(
     include_package_data=True,
     package_data={'ez_monitor': ['static/*', 'templates/*']},
     install_requires=[
+        "setuptools==75.1.0",
         "Flask==2.0.3",
         "Werkzeug==2.0.3",
         "Jinja2==3.0.3",
