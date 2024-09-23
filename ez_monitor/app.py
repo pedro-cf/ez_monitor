@@ -218,7 +218,12 @@ def get_static_network_info():
     interfaces = {}
     try:
         hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+        except:
+            local_ip = "Unable to retrieve"
         try:
             public_ip = requests.get('https://api.ipify.org').text
         except:
