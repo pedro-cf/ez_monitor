@@ -518,6 +518,7 @@ def get_metrics():
 # Command-line argument parsing
 def parse_arguments():
     parser = argparse.ArgumentParser(description='ez_monitor - System Metrics Dashboard')
+    parser.add_argument('--host', default='0.0.0.0', help='Host to run the server on')
     parser.add_argument('-p', '--port', type=int, default=5000, help='Port to run the server on')
     parser.add_argument('-r', '--refresh-rate', type=float, default=2, help='Refresh rate in seconds')
     parser.add_argument('-m', '--max-data-points', type=int, default=1800, help='Maximum number of data points to keep')
@@ -532,6 +533,7 @@ def main():
         logger.setLevel(logging.DEBUG)
     
     logging.info(f"Starting ez_monitor with the following configuration:")
+    logging.info(f"Host: {args.host}")
     logging.info(f"Port: {args.port}")
     logging.info(f"Refresh rate: {args.refresh_rate} seconds")
     logging.info(f"Max data points: {args.max_data_points}")
@@ -546,7 +548,7 @@ def main():
     metrics_thread.start()
     
     # Run the Flask app with auto-reload when in debug mode
-    app.run(debug=args.debug, use_reloader=args.debug, threaded=True, host='0.0.0.0', port=args.port)
+    app.run(debug=args.debug, use_reloader=args.debug, threaded=True, host=args.host, port=args.port)
 
 if __name__ == '__main__':
     main()

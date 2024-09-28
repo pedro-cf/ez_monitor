@@ -25,6 +25,7 @@ By default, ez_monitor will start on port 5000. You can access the dashboard by 
 
 You can customize the behavior of ez_monitor using the following command-line arguments:
 
+- `--host`: Specify the host to run the server on (default: 127.0.0.1, use 0.0.0.0 for network access)
 - `-p`, `--port`: Specify the port to run the server on (default: 5000)
 - `-r`, `--refresh-rate`: Set the refresh rate in seconds (default: 2)
 - `-m`, `--max-data-points`: Set the maximum number of data points to keep (default: 1800)
