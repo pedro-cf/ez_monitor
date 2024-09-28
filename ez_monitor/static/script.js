@@ -60,7 +60,9 @@ function createChart(ctx, label, isPercentage = true, fixedMax = null) {
                         },
                         callback: function(value, index, values) {
                             const date = new Date(this.getLabelForValue(value));
-                            return date.toTimeString().substr(0, 5);  // Returns time in HH:MM format
+                            const hours = date.getHours().toString().padStart(2, '0');
+                            const minutes = date.getMinutes().toString().padStart(2, '0');
+                            return `${hours}:${minutes}`;
                         }
                     }
                 },
